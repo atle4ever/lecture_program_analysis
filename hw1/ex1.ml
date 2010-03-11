@@ -1,3 +1,12 @@
+(*
+ * Department  : EE
+ * Student No. : 2009-20769
+ * Name        : Kim, Seongjun
+ * Exercise 1
+ *)
+
+exception Error of string
+
 let rec iter (n, f) =
   let fun_composit f1 f2 =
     fun x -> f1 (f2 x)
