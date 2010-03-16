@@ -14,7 +14,9 @@ let test_mult _ =
   assert_equal (eval (MULT (NUM 3, NUM 4))) 12
 
 let test_divide _ =
-  assert_equal (eval (DIVIDE (NUM 6, NUM 2))) 3
+  assert_equal (eval (DIVIDE (NUM 6, NUM 2))) 3;
+  assert_equal (eval (DIVIDE (NUM 2, NUM 3))) 0;
+  assert_raises Division_by_zero (fun _ -> (eval (DIVIDE (NUM 6, NUM 0))))
 
 let test_max _ =
   assert_equal (eval (MAX [])) 0;

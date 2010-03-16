@@ -2,27 +2,17 @@ open OUnit
 open Ex7
 
 let test_heap _ =
-  let h = Ex7.EMPTY in
-  let h = Ex7.insert (4, h) in
-  let h = Ex7.insert (8, h) in
-  let h = Ex7.insert (10, h) in
-  let h = Ex7.insert (9, h) in
-  let h = Ex7.insert (1, h) in
-  let h = Ex7.insert (3, h) in
-  let h = Ex7.insert (5, h) in
-    assert_equal 1 (Ex7.findMin h);
-    let h = Ex7.deleteMin h in
-      assert_equal 3 (Ex7.findMin h);
-      let h = Ex7.deleteMin h in
-        assert_equal 4 (Ex7.findMin h);
-        let h = Ex7.deleteMin h in
-          assert_equal 5 (Ex7.findMin h);
-          let h = Ex7.deleteMin h in
-            assert_equal 8 (Ex7.findMin h);
-            let h = Ex7.deleteMin h in
-              assert_equal 9 (Ex7.findMin h);
-              let h = Ex7.deleteMin h in
-                assert_equal 10 (Ex7.findMin h)
+  Random.self_init ();
+
+  let rec rand_arr (n) =
+    if n = 0 then []
+    else Random.int(100) :: rand_arr (n-1)
+  in
+  let ra = rand_arr(20) in
+  let heap = List.fold_left (fun heap x -> Ex7.insert (x, heap)) Ex7.EMPTY ra in
+  let sorted_ra = List.sort compare ra in
+    List.fold_left (fun heap x -> assert_equal x (Ex7.findMin heap); Ex7.deleteMin heap) heap sorted_ra;
+    ()
 
 let suite = "Test ex7" >:::
   ["test_head" >:: test_heap];

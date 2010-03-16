@@ -27,16 +27,8 @@ let test_imply _ =
   assert_equal (eval (IMPLY (TRUE, FALSE))) false;
   assert_equal (eval (IMPLY (FALSE, FALSE))) true
 
-(*
-let test_num _ =
-  assert_equal (eval_expr (NUM 3)) 3
-
-let test_plus _ =
-  assert_equal (eval_expr (PLUS (NUM 3, NUM 3))) 6
-
-let test_minus _ =
-  assert_equal (eval_expr (MINUS (NUM 4, NUM 3))) 1
-*)
+let test_composition _ =
+  assert_equal (eval (IMPLY (ORELSE(TRUE, ANDALSO(TRUE,FALSE)), (ORELSE(FALSE, IMPLY(TRUE, FALSE)))))) false
 
 let test_less _ =
   assert_equal (eval (LESS (NUM 2, (PLUS (MINUS (NUM 3, NUM 2), NUM 7))))) true
@@ -47,9 +39,5 @@ let suite = "Test ex5" >:::
      "test_andalso" >:: test_andalso;
      "test_orelse" >:: test_orelse;
      "test_imply" >:: test_imply;
-     (*
-       "test_num" >:: test_num;
-     "test_plus" >:: test_plus;
-     "test_minus" >:: test_minus;
-     *)
+     "test_composition" >:: test_composition;
      "test_less" >:: test_less];

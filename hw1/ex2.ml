@@ -5,7 +5,7 @@
  * Exercise 2
  *)
 
-let rec zipper (x, y) =
-    match x with
-        [] -> y
-        | x_head :: x_tail -> x_head :: zipper(y, x_tail)
+let rec zipper (xl, yl) =
+    match xl with
+        [] -> yl
+        | x :: xs -> x :: zipper(yl, xs)

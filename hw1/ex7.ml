@@ -5,6 +5,7 @@
  * Exercise 7
  *)
 
+(* CHECK is not done *)
 type heap = EMPTY | NODE of rank * value * heap * heap
 and rank = int
 and value = int
@@ -39,8 +40,7 @@ let rec merge =
       EMPTY, rh -> rh
       | lh, EMPTY -> lh
       | lh, rh ->
-          let lo = if (findMin lh) < (findMin rh) then lh else rh in
-          let hi = if (findMin lh) > (findMin rh) then lh else rh in
+          let lo, hi = if (findMin lh) < (findMin rh) then (lh, rh) else (rh, lh) in
             shake(findMin lo, left lo, merge(right lo, hi))
 
 let insert = function (x, h) -> merge(h, NODE(0, x,EMPTY,EMPTY))
