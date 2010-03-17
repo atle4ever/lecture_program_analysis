@@ -15,17 +15,18 @@ sig
   val deQ: queue -> element * queue
 end
 
-module IntListQ:Queue with type element = int list =
+(*module IntListQ:Queue with type element = int list =*)
+module IntListQ =
 struct
   type element = int list
   type queue = Queue of int list * int list
   exception EMPTY_Q
   let emptyQ = Queue ([], [])
-  let enQ ((q:queue), (e:element)) =
+  let enQ (q, e) =
     match q with
     Queue (a, b) -> Queue (e @ a, b)
 
-  let rec deQ (q:queue) =
+  let rec deQ q =
     match q with
     Queue ([], []) -> raise EMPTY_Q
       | Queue (a, []) -> deQ (Queue ([], List.rev a))
