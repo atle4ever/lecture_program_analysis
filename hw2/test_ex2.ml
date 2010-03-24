@@ -16,8 +16,7 @@ let test_queue _ =
   let queue3 = List.fold_left (fun q x -> let (r, q') = IntListQ.deQ q in assert_equal r x; q') queue2 ra1 in
   let queue4 = List.fold_left (fun q x -> IntListQ.enQ (q, x)) queue3 ra3 in
   let queue5 = List.fold_left (fun q x -> let (r, q') = IntListQ.deQ q in assert_equal r x; q') queue4 ra2 in
-  let queue6 = List.fold_left (fun q x -> let (r, q') = IntListQ.deQ q in assert_equal r x; q') queue5 ra3 in
-    ()
+    ignore(List.fold_left (fun q x -> let (r, q') = IntListQ.deQ q in assert_equal r x; q') queue5 ra3)
 
 let suite = "Test ex2" >:::
   ["test_queue" >:: test_queue]

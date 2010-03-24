@@ -15,7 +15,6 @@ sig
   val deQ: queue -> element * queue
 end
 
-(*module IntListQ:Queue with type element = int list =*)
 module IntListQ =
 struct
   type element = int list
