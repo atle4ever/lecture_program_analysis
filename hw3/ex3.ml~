@@ -1,0 +1,26 @@
+(*
+ * Department  : EE
+ * Student No. : 2009-20769
+ * Name        : Kim, Seongjun
+ * Exercise 3
+ *)
+
+module type CPO =
+  sig
+    type t
+    val order: t* t -> bool
+    val lub: t* t -> t
+    val bottom: t
+  end
+
+module type FIX =
+  sig
+    type t
+    val fix: (t -> t) -> t
+  end
+
+module Fix(D: CPO): FIX with type t = D.t =
+struct
+  type t = D.t
+  let fix (a) = a D.bottom
+end
