@@ -23,13 +23,13 @@ module Fix(D: CPO): FIX with type t = D.t =
 struct
   type t = D.t
   let fix  = function (f) ->
-    let rec intra_fix = function (f, prev_f, prev_lub) ->
-      let curr_f = f (prev_f) in
-      let curr_lub = D.lub(prev_lub, curr_f) in
+    let rec intra_fix = function (f, f_i, prev_lub) ->
+      let f_j = f (f_i) in
+      let curr_lub = D.lub(prev_lub, f_j) in
         if D.order(curr_lub, prev_lub) then
           curr_lub
         else
-          intra_fix (f, curr_f, curr_lub)
+          intra_fix (f, f_j, curr_lub)
     in
       intra_fix(f, D.bottom, D.bottom)
 end
