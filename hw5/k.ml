@@ -82,6 +82,7 @@ let rec eval_exp e m = match e with
   | READ ->
       List.fold_left (fun vs i -> vs $<< (Value.INT i)) emptyVS [-5; -4; -3; -2; -1; 0; 1; 2; 3; 4; 5]
 
+
 let tracingEval c m = []
 let collectingEval (l, s) m =
   let initialMS = emptyMS @<< emptyMemory in
