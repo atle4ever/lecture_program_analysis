@@ -1,0 +1,86 @@
+\documentclass{article}
+\usepackage{kotex}
+\usepackage{amssymb}
+\begin{document}
+
+\begin{eqnarray*}
+  M \in Memory & = & Loc \stackrel{\textrm{fin}}{\to} Val \\
+  l \in Loc & = & Var \\
+  v \in Val & = & \mathbb{Z} + Loc
+\end{eqnarray*}
+
+% skip
+\begin{displaymath}
+  \frac{ }{M \vdash \textrm{skip} \Rightarrow M}
+\end{displaymath}
+
+% x := E
+\begin{displaymath}
+  \frac{M \vdash E \Rightarrow v}{M \vdash x := E \Rightarrow M\{x \mapsto v\}}
+\end{displaymath}
+
+% *x := E
+\begin{displaymath}
+  \frac{M \vdash E \Rightarrow v}{M \vdash *x := E \Rightarrow M\{M(x) \mapsto v\}}
+\end{displaymath}
+
+% C; C
+\begin{displaymath}
+  \frac{M \vdash {C}_{1} \Rightarrow {M}_{1} \quad M \vdash {C}_{2} \Rightarrow {M}_{2}}{M \vdash {C}_{1} \, ; \, {C}_{2} \Rightarrow {M}_{2}}
+\end{displaymath}
+
+% if E C C
+\begin{displaymath}
+  \frac{M \vdash E \Rightarrow 0 \quad M \vdash {C}_{2} \Rightarrow M'}{M \vdash \textrm{if} \, E \, {C}_{1} \, {C}_{2} \Rightarrow M'}
+\end{displaymath}
+
+\begin{displaymath}
+  \frac{M \vdash E \Rightarrow v \quad M \vdash {C}_{1} \Rightarrow M'}{M \vdash \textrm{if} \, E \, {C}_{1} \, {C}_{2} \Rightarrow M'} \, v \neq 0
+\end{displaymath}
+
+% while E C
+\begin{displaymath}
+  \frac{M \vdash E \Rightarrow 0}{M \vdash \textrm{while} \, E \, C \Rightarrow M}
+\end{displaymath}
+
+\begin{displaymath}
+  \frac{M \vdash E \Rightarrow 0 \quad M \vdash C \Rightarrow {M}_{1} \quad {M}_{1} \vdash \textrm{while} \, E \, C \Rightarrow {M}_{2}}{M \vdash \textrm{while} \, E \, C \Rightarrow {M}_{2}} \, v \neq 0
+\end{displaymath}
+\\
+% n
+\begin{displaymath}
+  \frac{ }{M \vdash n \Rightarrow n}
+\end{displaymath}
+
+% E + E
+\begin{displaymath}
+  \frac{ M \vdash {E}_{1} \Rightarrow {v}_{1} \quad M \vdash {E}_{2} \Rightarrow {v}_{2}}{M \vdash {E}_{1} \, \textrm{+} \, {E}_{2} \Rightarrow {v}_{1} + {v}_{2}}
+\end{displaymath}
+
+% -E
+\begin{displaymath}
+  \frac{ M \vdash E \Rightarrow v}{M \vdash \textrm{-}E \Rightarrow -v}
+\end{displaymath}
+
+% x
+\begin{displaymath}
+  \frac{ }{M \vdash x \Rightarrow M(x)}
+\end{displaymath}
+
+% *x
+\begin{displaymath}
+  \frac{ }{M \vdash *x \Rightarrow M(M(x))}
+\end{displaymath}
+
+% &x
+\begin{displaymath}
+  \frac{ }{M \vdash \&x \Rightarrow x}
+\end{displaymath}
+
+% read
+\begin{displaymath}
+  \frac{ }{M \vdash \textrm{read} \Rightarrow z} \, z \in [-5, +5]
+\end{displaymath}
+
+
+\end{document}
