@@ -53,7 +53,7 @@ let (@<<) ms m = MemorySet.add m ms
 let ($+) vs1 vs2 = VS.union vs1 vs2
 let ($<<) vs v = VS.add v vs
 
-let rec eval_exp e ms = match e with
+let rec eval_exp e m = match e with
     NUM i -> emptyVS $<< (Value.INT i)
   | ADD (e1, e2) ->
       let addVi vi1 vi2 =
@@ -61,8 +61,8 @@ let rec eval_exp e ms = match e with
             Value.INT i1, Value.INT i2 -> Value.INT (i1 + i2)
           | _, _ -> raise (Error "LOC can be added")
       in
-      let vs1 = eval_exp e1 ms in
-      let vs2 = eval_exp e2 ms in
+      let vs1 = eval_exp e1 m in
+      let vs2 = eval_exp e2 m in
         VS.fold (fun vi1 vs ->
                    vs $+ (VS.fold (fun vi2 vs ->
                               vs $<< (addVi vi1 vi2)
@@ -70,17 +70,17 @@ let rec eval_exp e ms = match e with
                 ) vs2 emptyVS
 
   | MINUS (e1) ->
-      let vs1 = eval_exp e1 ms in
-        VS.fold (fun (Value.INT i) vs -> VS.add (Value.INT (-1*i)) vs) vs1 emptyVS
+      let vs1 = eval_exp e1 m in
+        VS.fold (fun (Value.INT i) vs -> vs $<< (Value.INT (-1*i))) vs1 emptyVS
 
-  | VAR x -> MemorySet.fold (fun m vs -> vs $<< (Memory.lookup x m)) ms emptyVS
+  | VAR x -> emptyVS $<< (Memory.lookup x m)
   | STAR x ->
-      let vs = eval_exp (VAR x) ms in
-        VS.fold (fun (Value.LOC s) vs -> VS.union (eval_exp (VAR s) ms) vs) vs emptyVS
+      let vs = eval_exp (VAR x) m in
+        VS.fold (fun (Value.LOC s) vs -> vs $+ (eval_exp (VAR s) m)) vs emptyVS
 
-  | AMPER x -> VS.add (Value.LOC x) emptyVS
+  | AMPER x -> emptyVS $<< (Value.LOC x)
   | READ ->
-      List.fold_left (fun vs i -> VS.add (Value.INT i) vs) emptyVS [-5; -4; -3; -2; -1; 0; 1; 2; 3; 4; 5]
+      List.fold_left (fun vs i -> vs $<< (Value.INT i)) emptyVS [-5; -4; -3; -2; -1; 0; 1; 2; 3; 4; 5]
 
 let tracingEval c m = []
 let collectingEval (l, s) m =
@@ -88,16 +88,15 @@ let collectingEval (l, s) m =
   let rec eval s cm = match s with
       SKIP -> (cm, cm)
     | ASSIGN(x, e) ->
-        let vs = eval_exp e cm in
         let new_cm = MemorySet.fold (fun m ms ->
                                        ms @+ (VS.fold (fun v ms ->
                                                          ms @<< (Memory.bind x v m)
-                                                      ) vs emptyMS)
+                                                      ) (eval_exp e m) emptyMS)
                                     ) cm emptyMS
         in
           (new_cm, cm @+ new_cm)
-    | ASSIGNSTAR(x, e) ->
-        let vs = eval_exp e cm in
+    | ASSIGNSTAR(x, e) -> (cm, cm)
+(*        let vs = eval_exp e c in
         let vx = eval_exp (VAR x) cm in
         let new_cm = VS.fold (fun v ms ->
                                 ms @+ (VS.fold (fun (Value.LOC x) ms ->
@@ -108,13 +107,15 @@ let collectingEval (l, s) m =
                              ) vs emptyMS
         in
           (new_cm, cm @+ new_cm)
+*)
 
     | SEQ((l1, s1), (l2, s2)) ->
-        let new_cm = fst(eval s1 cm) in
-        let new_cm' = fst(eval s2 new_cm) in
-          (new_cm', cm @+ new_cm @+ new_cm')
+        let new_cm, new_tm = eval s1 cm in
+        let new_cm', new_tm' = eval s2 new_cm in
+          (new_cm', (cm @+ new_cm) @+ new_cm')
 
-    | IF(e, (l1, s1), (l2, s2)) ->
+    | IF(e, (l1, s1), (l2, s2)) -> (cm, cm)
+        (*
         let vs = eval_exp e cm in
         let new_cm = VS.fold (fun v ms ->
                                 ms @+ (if v == (Value.INT 0) then
@@ -124,9 +125,10 @@ let collectingEval (l, s) m =
                              ) vs emptyMS
         in
           (new_cm, cm @+ new_cm)
+        *)
 
-    | WHILE(e, (l1, s1)) ->
-        let vs = eval_exp e cm in
+    | WHILE(e, (l1, s1)) -> (cm, cm)
+(*        let vs = eval_exp e cm in
         let new_cm = VS.fold (fun v ms ->
                                 ms @+ (if v == (Value.INT 0) then
                                          cm
@@ -135,10 +137,9 @@ let collectingEval (l, s) m =
                              ) vs emptyMS
         in
           (new_cm, cm @+ new_cm)
+*)
   in
-
-  let (cm, tm) = eval s initialMS in
-    tm
+    snd(eval s initialMS)
 
 let pointCollectingEval c m =
   (fun x -> emptyMS)
