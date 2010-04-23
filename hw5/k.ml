@@ -97,6 +97,7 @@ let tracingEval c m =
             let vs = eval_exp e m in
               VS.fold (fun v ts -> ((Memory.bind x v m) :: t) :: ts) vs []
         | ASSIGNSTAR(x, e) ->
+            let m = List.hd t in
             let vs = eval_exp e m in
             let xvs = eval_exp (VAR x) m in
             VS.fold (fun v ts ->
@@ -131,9 +132,79 @@ let collectingEval c m =
                       ms @+ (List.fold_left (@<<) emptyMS t)
                    ) emptyMS ts
 
+module OrderedTypeForInt : (Map.OrderedType with type t = int) =
+struct
+  type t = int
+  let compare = compare
+end
+module LL = Map.Make(OrderedTypeForInt)
+let emptyLL = (LL.empty : MemorySet.t LL.t)
+let add l m ll =
+  let ms =
+    try
+      LL.find l ll
+    with Not_found ->
+      emptyMS
+  in
+    LL.add l (ms @<< m) ll
+
+let string_of_ms set =
+  MemorySet.fold (fun e str-> "  {\n"^(Memory.string_of_memory e)^"  }\n") set ""
+
+let string_of_ll ll =
+  (if
+     LL.is_empty ll then "    Empty\n"
+   else
+     LL.fold (fun k v str-> str^"    "^(string_of_int k)^" : "^(string_of_ms v)^"\n") ll "")
+
 
 let pointCollectingEval c m =
-  (fun x -> emptyMS)
+  let rec eval (l, s) m ll =
+    let ll = add l m ll in
+      match s with
+          SKIP -> (emptyMS @<< m, ll)
+        | ASSIGN(x, e) ->
+            let vs = eval_exp e m in
+              (VS.fold (fun v ms -> ms @<< (Memory.bind x v m)) vs emptyMS, ll)
+        | ASSIGNSTAR(x, e) ->
+            let vs = eval_exp e m in
+            let xvs = eval_exp (VAR x) m in
+              (VS.fold (fun v ms ->
+                         ms @+ (VS.fold (fun xv ms ->
+                                           ms @<< (Memory.bind (loc_of_value xv) v m)
+                                        ) xvs emptyMS)
+                      ) vs emptyMS,
+               ll)
+
+        | SEQ(c1, c2) ->
+            let (ms, ll) = eval c1 m ll in
+              MemorySet.fold (fun m (ms, ll) ->
+                                let (ms', ll') = eval c2 m ll in
+                                  (ms @+ ms', ll')
+                             ) ms (emptyMS, ll)
+
+        | IF(e, c1, c2) ->
+            let vs = eval_exp e m in
+              VS.fold (fun v (ms, ll) ->
+                         let (ms', ll') = (if (int_of_value v) != 0 then eval c1 m ll else eval c2 m ll) in
+                           (ms @+ ms', ll')
+                      ) vs (emptyMS, ll)
+
+        | WHILE(e, c1) ->
+            let vs = eval_exp e m in
+              VS.fold (fun v (ms, ll) ->
+                         let (ms', ll') = (if (int_of_value v) == 0 then
+                                             (emptyMS @<< m, ll)
+                                           else
+                                             eval (l, SEQ(c1, (l, s))) m ll
+                                          )
+                         in
+                           (ms @+ ms', ll')
+                      ) vs (emptyMS, ll)
+  in
+  let (ms, ll) = eval c emptyMemory emptyLL in
+    LL.fold (fun l ms f -> (fun l' -> if l' == l then ms else (f l'))) ll (fun l -> print_int l; raise (Error "Wrong label"))
+
 
 (****)
 let rec string_of_exp e = match e with
