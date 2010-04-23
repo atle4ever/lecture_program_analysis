@@ -53,13 +53,19 @@ let (@<<) ms m = MemorySet.add m ms
 let ($+) vs1 vs2 = VS.union vs1 vs2
 let ($<<) vs v = VS.add v vs
 
+let int_of_value v = match v with
+    Value.INT i -> i
+  | Value.LOC _ -> raise (Error "LOC is used as INT type")
+
+let loc_of_value v = match v with
+    Value.LOC l -> l
+  | Value.INT _ -> raise (Error "INT is used as LOC type")
+
 let rec eval_exp e m = match e with
     NUM i -> emptyVS $<< (Value.INT i)
   | ADD (e1, e2) ->
       let addVi vi1 vi2 =
-        match(vi1, vi2) with
-            Value.INT i1, Value.INT i2 -> Value.INT (i1 + i2)
-          | _, _ -> raise (Error "LOC can be added")
+        Value.INT ((int_of_value vi1) + (int_of_value vi2))
       in
       let vs1 = eval_exp e1 m in
       let vs2 = eval_exp e2 m in
@@ -71,76 +77,60 @@ let rec eval_exp e m = match e with
 
   | MINUS (e1) ->
       let vs1 = eval_exp e1 m in
-        VS.fold (fun (Value.INT i) vs -> vs $<< (Value.INT (-1*i))) vs1 emptyVS
+        VS.fold (fun v vs -> vs $<< (Value.INT (-1*(int_of_value v)))) vs1 emptyVS
 
   | VAR x -> emptyVS $<< (Memory.lookup x m)
   | STAR x ->
       let vs = eval_exp (VAR x) m in
-        VS.fold (fun (Value.LOC s) vs -> vs $+ (eval_exp (VAR s) m)) vs emptyVS
+        VS.fold (fun v vs -> vs $+ (eval_exp (VAR (loc_of_value v)) m)) vs emptyVS
 
   | AMPER x -> emptyVS $<< (Value.LOC x)
   | READ ->
       List.fold_left (fun vs i -> vs $<< (Value.INT i)) emptyVS [-5; -4; -3; -2; -1; 0; 1; 2; 3; 4; 5]
 
+let tracingEval c m =
+  let rec eval (l, s) t =
+      match s with
+          SKIP -> [t]
+        | ASSIGN(x, e) ->
+            let m = List.hd t in
+            let vs = eval_exp e m in
+              VS.fold (fun v ts -> ((Memory.bind x v m) :: t) :: ts) vs []
+        | ASSIGNSTAR(x, e) ->
+            let vs = eval_exp e m in
+            let xvs = eval_exp (VAR x) m in
+            VS.fold (fun v ts ->
+                       ts @ (VS.fold (fun xv ts ->
+                                        ((Memory.bind (loc_of_value xv) v m) :: t) :: ts
+                                     ) xvs [])
+                    ) vs []
 
-let tracingEval c m = []
-let collectingEval (l, s) m =
-  let initialMS = emptyMS @<< emptyMemory in
-  let rec eval s cm = match s with
-      SKIP -> (cm, cm)
-    | ASSIGN(x, e) ->
-        let new_cm = MemorySet.fold (fun m ms ->
-                                       ms @+ (VS.fold (fun v ms ->
-                                                         ms @<< (Memory.bind x v m)
-                                                      ) (eval_exp e m) emptyMS)
-                                    ) cm emptyMS
-        in
-          (new_cm, cm @+ new_cm)
-    | ASSIGNSTAR(x, e) -> (cm, cm)
-(*        let vs = eval_exp e c in
-        let vx = eval_exp (VAR x) cm in
-        let new_cm = VS.fold (fun v ms ->
-                                ms @+ (VS.fold (fun (Value.LOC x) ms ->
-                                           ms @+ (MemorySet.fold (fun m ms ->
-                                                             ms @<< (Memory.bind x v m)
-                                                          ) ms emptyMS)
-                                        ) vx emptyMS)
-                             ) vs emptyMS
-        in
-          (new_cm, cm @+ new_cm)
-*)
+        | SEQ(c1, c2) ->
+            let ts = eval c1 t in
+              List.fold_left (fun ts' t' -> (eval c2 t') @ ts') [] ts
 
-    | SEQ((l1, s1), (l2, s2)) ->
-        let new_cm, new_tm = eval s1 cm in
-        let new_cm', new_tm' = eval s2 new_cm in
-          (new_cm', (cm @+ new_cm) @+ new_cm')
+        | IF(e, c1, c2) ->
+            let m = List.hd t in
+            let vs = eval_exp e m in
+              VS.fold (fun v ts -> ts @ (if (int_of_value v) != 0 then eval c1 t else eval c2 t)) vs []
 
-    | IF(e, (l1, s1), (l2, s2)) -> (cm, cm)
-        (*
-        let vs = eval_exp e cm in
-        let new_cm = VS.fold (fun v ms ->
-                                ms @+ (if v == (Value.INT 0) then
-                                         fst(eval s1 cm)
-                                       else
-                                         fst(eval s2 cm))
-                             ) vs emptyMS
-        in
-          (new_cm, cm @+ new_cm)
-        *)
-
-    | WHILE(e, (l1, s1)) -> (cm, cm)
-(*        let vs = eval_exp e cm in
-        let new_cm = VS.fold (fun v ms ->
-                                ms @+ (if v == (Value.INT 0) then
-                                         cm
-                                       else
-                                         fst(eval s (fst (eval s1 cm))))
-                             ) vs emptyMS
-        in
-          (new_cm, cm @+ new_cm)
-*)
+        | WHILE(e, c1) ->
+            let m = List.hd t in
+            let vs = eval_exp e m in
+              VS.fold (fun v ts -> ts @ (if (int_of_value v) == 0 then
+                                           [t]
+                                         else
+                                           eval (l, SEQ(c1, (l, s))) t
+                                        )) vs []
   in
-    snd(eval s initialMS)
+    List.map List.rev (eval c [m])
+
+let collectingEval c m =
+  let ts = tracingEval c m in
+    List.fold_left (fun ms t ->
+                      ms @+ (List.fold_left (@<<) emptyMS t)
+                   ) emptyMS ts
+
 
 let pointCollectingEval c m =
   (fun x -> emptyMS)
