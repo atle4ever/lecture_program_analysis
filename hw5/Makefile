@@ -33,3 +33,24 @@ lexer.ml: lexer.mll parser.cmx
 
 clean:
 	rm -f *.cmx *.cmi parser.mli parser.ml lexer.ml main.native *.o
+
+debug: value.cmo memory.cmo lexer.cmo parser.cmo k.cmo main.cmo
+	ocamlc -g -o main.debug value.cmo memory.cmo lexer.cmo parser.cmo k.cmo main.cmo
+
+value.cmo: value.ml
+	ocamlc -g -c value.ml
+
+memory.cmo: value.cmo memory.ml
+	ocamlc -g -c value.cmo memory.ml
+
+lexer.cmo: lexer.ml
+	ocamlc -g -c lexer.ml
+
+parser.cmo: parser.ml
+	ocamlc -g -c parser.ml
+
+k.cmo: value.cmo memory.cmo k.ml
+	ocamlc -g -c value.cmo memory.cmo k.ml
+
+main.cmo: k.cmo main.ml
+	ocamlc -g -c k.cmo main.ml
