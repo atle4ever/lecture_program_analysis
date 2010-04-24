@@ -32,10 +32,10 @@ lexer.ml: lexer.mll parser.cmx
 	ocamllex lexer.mll
 
 clean:
-	rm -f *.cmx *.cmi parser.mli parser.ml lexer.ml main.native *.o
+	rm -f *.cmx *.cmi parser.mli parser.ml lexer.ml main.native main.debug *.o *.cmo test_suite
 
-debug: value.cmo memory.cmo lexer.cmo parser.cmo k.cmo main.cmo
-	ocamlc -g -o main.debug value.cmo memory.cmo lexer.cmo parser.cmo k.cmo main.cmo
+debug: value.cmo memory.cmo lexer.cmo parser.cmo k.cmo main.cmo printer.cmo
+	ocamlc -g -o main.debug value.cmo memory.cmo lexer.cmo parser.cmo k.cmo main.cmo printer.cmo
 
 value.cmo: value.ml
 	ocamlc -g -c value.ml
@@ -52,5 +52,14 @@ parser.cmo: parser.ml
 k.cmo: value.cmo memory.cmo k.ml
 	ocamlc -g -c value.cmo memory.cmo k.ml
 
+printer.cmo: value.cmo memory.cmo k.cmo printer.ml
+	ocamlc -c value.cmo memory.cmo k.cmo printer.ml
+
 main.cmo: k.cmo main.ml
 	ocamlc -g -c k.cmo main.ml
+
+test: test_suite
+	./test_suite
+
+test_suite: value.cmo memory.cmo k.cmo printer.cmo test_eval_exp.ml
+	ocamlc -o test_suite -I .. unix.cma ../oUnit.cmo value.cmo memory.cmo k.cmo printer.cmo test_eval_exp.ml test_suite.ml
