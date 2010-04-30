@@ -155,9 +155,9 @@ struct
     | (ELT(a,b), ELT(a',b')) -> ELT(A.join a a', B.join b b')
   let leq x y = match (x,y)
   with (BOT,_) -> true
+    | (_,TOP) -> true
     | (TOP,_) -> false
     | (_,BOT) -> false
-    | (_,TOP) -> true
     | (ELT(a,b), ELT(a',b')) -> (A.leq a a') && (B.leq b b')
   let l x = match x with TOP -> A.top | BOT -> A.bot | ELT(a,b) -> a
   let r x = match x with TOP -> B.top | BOT -> B.bot | ELT(a,b) -> b
