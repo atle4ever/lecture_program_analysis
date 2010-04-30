@@ -1,0 +1,42 @@
+Domain
+ leq: partial order
+    BOT, _ -> true
+  | _, BOT -> false
+  | _, TOP -> true
+  | TOP, _ -> false
+  | ...
+
+ make의 결과가 TOP과 동일하더라도 TOP으로 바꿀 필요 없음?
+
+PowersetDomain
+ inter: 교집합
+ diff: 차집합
+ union: 합집합
+
+ remove a x에서 a에 x가 포함되어 있지 않다면? 변화없이 a 리턴
+
+ remove TOP x라면 ELT(A - x)를 리턴? 혹은 diff TOP y일 때는?
+
+ join과 union이 동일?
+
+FunDomain
+ image: f -> x -> f(x)
+ update: f -> x -> y -> f{x -> y}
+ make: (x, f(x)) list -> f
+
+ TOP of A -> B: for all a in A, return TOP of B
+ BOT of A -> B: for all a in A, return BOT of B
+
+Zintvl
+ TOP of 2^A -> U (?)
+ BOT of 2^A -> empty set
+
+ l(BOT) or u(BOT): raise Undefined
+
+ 언제 Undefined exception이 발생?
+
+ join에서 겹치지 않으면? 두 interval을 포함하는 interval 중에 제일 작은 interv?
+
+ 만약 i j라면 Undefined?
+
+
