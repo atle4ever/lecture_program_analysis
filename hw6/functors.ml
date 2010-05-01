@@ -10,9 +10,10 @@ module type SET = sig
 end
 
 module PrimitiveSet (A: sig
-                       type t val compare: t -> t -> int
-                              exception TooMany
-                              val all: unit -> t list
+                       type t
+                       val compare: t -> t -> int
+                       exception TooMany
+                       val all: unit -> t list
                      end) =
 struct
   include Set.Make (A)
@@ -200,16 +201,12 @@ struct
       BOT -> BOT
     | TOP ->
         remove a (ELT (A.all()))
-          (* ELT (A.fold (fun a' s -> if a != a' A.add a' s else s) (A.all()) A.empty) *)
     | ELT s ->
-        ELT (A.filter ((!=) a) s)
-          (* QnA: 만약 remove, diff나 inter의 결과가 empty set이 되더라도 BOT로 바꿀 필요 없음?
-             let s' = A.filter ((!=) a) s in
-             if A.is_empty s' then
-             BOT
-             else
-             ELT s'
-          *)
+        let s' = A.filter ((!=) a) s in
+          if A.is_empty s' then
+            BOT
+          else
+            ELT s'
 
   let rec diff x y = match (x, y) with
       BOT, _ -> BOT
@@ -217,14 +214,7 @@ struct
     | _, TOP -> BOT
     | TOP, _ -> diff (ELT (A.all())) y
     | ELT s1, ELT s2 ->
-        ELT (A.filter (fun a -> not(A.mem a s2)) s1)
-          (* QnA: 만약 remove, diff나 inter의 결과가 empty set이 되더라도 BOT로 바꿀 필요 없음?
-             let s' = A.filter (fun a -> not(A.mem a s2)) s1 in
-             if A.is_empty s' then
-             BOT
-             else
-             ELT s'
-          *)
+        A.fold (fun a elt -> remove a elt) s2 x
 
   let inter x y = match (x, y) with
       BOT, _ -> BOT
@@ -232,14 +222,11 @@ struct
     | TOP, _ -> y
     | _, TOP -> x
     | ELT s1, ELT s2 ->
-        ELT (A.filter (fun a -> A.mem a s2) s1)
-          (* QnA: 만약 remove, diff나 inter의 결과가 empty set이 되더라도 BOT로 바꿀 필요 없음?
-             let s' = A.filter (fun a -> A.mem a s2) s1 in
-             if A.is_empty s' then
-             BOT
-             else
-             ELT s'
-          *)
+        let s' = A.filter (fun a -> A.mem a s2) s1 in
+          if A.is_empty s' then
+            BOT
+          else
+            ELT s'
 
   let union x y = join x y
 
@@ -248,8 +235,7 @@ struct
     | (_,TOP) -> true
     | (TOP,_) -> false
     | (_,BOT) -> false
-    | (ELT _, ELT _) -> (inter x y) == x
-        (* QnA: BOT <= ..., ... <= TOP ?? *)
+    | (ELT s1, ELT s2) -> A.fold (fun a b -> (A.mem a s2) && b) s1 true
 
 (* ... *)
 end
@@ -266,34 +252,14 @@ struct
   let top = TOP
 
   (* ... *)
+  let b = A.fold (fun a m -> Map.add a B.bot m) (A.all()) Map.empty
+  let t = A.fold (fun a m -> Map.add a B.top m) (A.all()) Map.empty
+  let bb = ELT (A.fold (fun a m -> Map.add a B.bot m) (A.all()) Map.empty)
+  let tt = ELT (A.fold (fun a m -> Map.add a B.top m) (A.all()) Map.empty)
+
   let make lst = match lst with
       [] -> BOT
-    | l -> ELT (List.fold_left (fun m (l, r) -> Map.add l r m) Map.empty l)
-
-  let tt = make (A.fold (fun a lst -> (a, B.top) :: lst) (A.all()) [])
-
-
-  let bb = make (A.fold (fun a lst -> (a, B.bot) :: lst) (A.all()) [])
-
-  let rec fold f x a = match x with
-      BOT -> fold f bb a
-    | TOP -> fold f tt a
-    | ELT s -> Map.fold f s a
-
-  let rec map f x = match x with
-      BOT -> map f bb
-    | TOP -> map f tt
-    | ELT s -> make (Map.fold (fun l r lst -> (f l r) :: lst) s [])
-
-  let rec update x l r = match x with
-      BOT -> update bb l r
-    | TOP -> update tt l r
-    | ELT s -> ELT (Map.add l r s)
-
-  let image x l = match x with
-      BOT -> B.bot
-    | TOP -> B.top
-    | ELT s -> Map.find l s
+    | l -> ELT (List.fold_left (fun m (l, r) -> Map.add l r m) b l)
 
   let leq x y = match (x, y) with
       BOT, _ -> true
@@ -302,6 +268,11 @@ struct
     | _, BOT -> false
     | ELT s1, ELT s2 ->
         Map.fold (fun l r b -> (B.leq r (Map.find l s2)) && b) s1 true
+
+  let image x l = match x with
+      BOT -> B.bot
+    | TOP -> B.top
+    | ELT s -> Map.find l s
 
   let join x y = match (x, y) with
       (BOT, _) -> y
@@ -313,6 +284,22 @@ struct
                          Map.add l (B.join r (Map.find l m)) m
                       ) s1 s2
             )
+
+  let rec update x l r = match x with
+      BOT -> update bb l r
+    | TOP -> update tt l r
+    | ELT s -> ELT (Map.add l r s)
+
+  let rec fold f x a = match x with
+      BOT -> fold f bb a
+    | TOP -> fold f tt a
+    | ELT s -> Map.fold f s a
+
+  let rec map f x = match x with
+      BOT -> map f bb
+    | TOP -> map f tt
+    | ELT s -> make (Map.fold (fun l r lst -> (f l r) :: lst) s [])
+
           (* ... *)
 end
 
@@ -335,6 +322,15 @@ struct
 
   let (>) i j = j < i
 
+  let (==) i j = match (i, j) with
+      Pinfty, Pinfty -> true
+    | Ninfty, Ninfty -> true
+    | Z i, Z i' -> i == i'
+    | _, _ -> false
+
+  let (<=) i j = (i < j) || (i == j)
+  let (<=) i j = j <= i
+
   let max i j = if i < j then j else i
   let min i j = if i < j then i else j
 
@@ -346,7 +342,7 @@ struct
   let leq x y = match (x, y) with
       BOT, _ -> true
     | _, BOT -> false
-    | ELT(l, h), ELT(l', h') -> (l > l') && (h < h')
+    | ELT(l, h), ELT(l', h') -> (l >= l') && (h <= h')
 
   let l x = match x with
       BOT -> raise Undefined

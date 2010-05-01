@@ -24,8 +24,11 @@ module Value = ProductDomain (Z) (Loc)
 
 module Memory = FunDomain (Var) (Value)
 
+module Mem = FunDomain (Var) (Z)
+
 module State = ProductDomain (Memory) (A)
 
+(*
 let v = Value.make (Z.make [1;2]) (Loc.make ["a"])
 let m = Memory.update Memory.bot "a" v
 let v' = Memory.image m "a"
@@ -34,4 +37,4 @@ let (z,z') = (Value.l v, Value.l v')
 let (l,l') = (Value.r v, Value.r v')
 let _ = Z.leq z z'
 let _ = Loc.leq l l'
-
+*)
