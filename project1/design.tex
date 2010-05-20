@@ -1,0 +1,139 @@
+% !TEX encoding = MacKorean
+\documentclass{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{a4paper}                   % ... or a4paper or a5paper or ... 
+
+\usepackage{hangul}
+
+\usepackage{amssymb}
+\usepackage{mathrsfs}
+
+\title{Project1 Report}
+\author{Kim, Seongjun}
+\date{2009-20769}                                           % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+
+% Definition of State
+\begin{eqnarray*}
+	M \in Memory & = & Loc \stackrel{\textrm{fin}}{\to} Val \\
+  	l \in Loc & = & Var \\
+  	v \in Val & = & \mathbb{Z} + \mathbb{B} + Loc \\
+	b \in \mathbb{B} & = & \{T, F\} \\
+	L \in Label & = & \mathbb{N} \\
+	s \in State & = & ((Label \times Cmd) \times Memory) \\
+\\
+% Definition of T_0
+T_{0} & = & \{ <{Cmd}_{0},Memory_{\bot}> \} \quad ({Cmd}_{0}\textrm{는 제일 처음 실행되는 Cmd}) \\
+\\
+% Definition of Next
+Next & \in & 2^{State} \to 2^{State} \\
+	 & = & {\wp}(next) \quad ({\wp} = \lambda{}f.\lambda{}X. \{f x|x \in X\}) \\
+\\
+% Definition of next
+	next & \in & State \to State \\
+	next \, ((L, \texttt{skip})							\, M) & = & (nl \, L, M) \\
+	next \, ((L, x \, \texttt{:=} \, E)					\, M) & = & (nl \, L, M\{x \mapsto v \} ) \quad (v = \mathcal{V} \, E \, M)\\
+	next \, ((L, \texttt{*}x \, \texttt{:=} \, E)			\, M) & = & (nl \, L, M\{M(x) \mapsto v \} ) \quad (v = \mathcal{V} \, E \, M)\\
+	next \, ((L, \texttt{if} \, E \, {Cmd}_1 \, {Cmd}_2)	\, M) & = & (v == T) \, ? \,
+																	({Cmd}_1, M) \, : \,
+																	({Cmd}_2, M)
+																	\quad (v = \mathcal{V} \, E \, M)\\
+	next \, ((L, \texttt{while} \, E \, Cmd) 				\, M) & = & (v == T) \, ? \,
+																	(Cmd, M) \, : \,
+																	(nl \, L, M)
+																	\quad (v = \mathcal{V} \, E \, M)\\
+\\
+% Definition of nl
+% Evaluation of E
+	\mathcal{V} & = & E \to Memory \to Val \\
+	\mathcal{V} \, n						\, M & = & n \\
+	\mathcal{V} \, \texttt{true}			\, M & = & T \\
+	\mathcal{V} \, \texttt{false}		\, M & = & F \\
+	\mathcal{V} \, x 					\, M & = & M(x) \\
+	\mathcal{V} \, \texttt{*}x 			\, M & = & M(M(x)) \\
+	\mathcal{V} \, \texttt{\&}x 			\, M & = & x \\
+	\mathcal{V} \, E_1 \texttt{+} E_2 	\, M & = & (\mathcal{V} \, E_1 \, M) + (\mathcal{V} \, E_1 \, M) \\
+	\mathcal{V} \, \texttt{-} E 			\, M & = & -(\mathcal{V} \, E \, M) \\
+	\mathcal{V} \, E_1 \texttt{<} E_2		\, M & = & n_1 < n_2 \, ? \, T \, : \, F \\
+	\mathcal{V} \, \texttt{read} 		\, M & = & z \quad (z\textrm{는 임의의 정수}) \\
+\end{eqnarray*}
+
+% Definition of \hat{State}
+\begin{eqnarray*}
+\hat{State} & = & ((Label \times Cmd) \times \hat{Memory}) \\
+\hat{m} \in \hat{Memory} & = & Loc \stackrel{\textrm{fin}}{\to} \hat{Val} \\
+\hat{Val} & = & \hat{\mathbb{Z}} + \mathbb{B} + Loc \\
+\hat{\mathbb{Z}} & = & (\hat{Parity} \times \hat{Interval}) \\
+\hat{p} \in \hat{Parity} & = & \{ \bot, \top, odd, even \} \\
+\hat{i} \in \hat{Interval} & = & \{ \bot \} \cup \{(a, b) \, | \, a \le b, \, a, b \in \mathbb{Z} \cup \{\infty, -\infty  \} 
+\\
+% 갈로아 짝
+{2}^{State} & \stackrel{\alpha}{\longrightarrow} & \hat{State} \\
+\alpha & = & {\alpha}_{1} \circ {\alpha}_{0} \\
+{2}^{State} & \stackrel{{\alpha}_{0}}{\longrightarrow} & ((Label \times Cmd) \times {2}^{Memory}) \\
+((Label \times Cmd) \times {2}^{Memory}) & \stackrel{{\alpha}_{1}}{\longrightarrow} & ((Label \times Cmd) \times \hat{Memory}) \\
+2^{Memory} & \stackrel{{\alpha}_{2}}{\longrightarrow} & \hat{Memory} \\
+2^{Memory} & \stackrel{{\alpha}_{3}}{\longrightarrow} & Loc \stackrel{\textrm{fin}}{\to} 2^{Val} \\
+2^{Val} & \stackrel{{\alpha}_{4}}{\longrightarrow} & \hat{Val} \\
+\\
+% \hat{Next}
+\hat{Next} & \in & {2}^{\hat{State}} \to {2}^{\hat{State}} \\
+		   & = & \wp(\sqcup) \circ \hat{\pi} \circ \wp(\hat{next}) \\
+\\
+% \hat{next}
+	\hat{next} & \in & \hat{State} \to \hat{State} \\
+	\hat{next} \, ((L, \texttt{skip})							\, \hat{m}) & = & (nl \, L, \hat{m}) \\
+	\hat{next} \, ((L, x \, \texttt{:=} \, E)					\, \hat{m}) & = & (nl \, L, \hat{m}\{x \mapsto \hat{v} \} ) \quad (\hat{v} = \hat{\mathcal{V}} \, E \, \hat{m})\\
+	\hat{next} \, ((L, \texttt{*}x \, \texttt{:=} \, E)			\, \hat{m}) & = & (nl \, L, \hat{m}\{\hat{m}(x) \mapsto \hat{v} \} ) \quad (\hat{v} = \hat{\mathcal{V}} \, E \, \hat{m})\\
+	\hat{next} \, ((L, \texttt{if} \, E \, {Cmd}_1 \, {Cmd}_2)	\, \hat{m}) & = & (\hat{v} == T) \, ? \,
+																	({Cmd}_1, \hat{m}) \, : \,
+																	({Cmd}_2, \hat{m})
+																	\quad (\hat{v} = \hat{\mathcal{V}} \, E \, \hat{m})\\
+	\hat{next} \, ((L, \texttt{while} \, E \, Cmd) 				\, \hat{m}) & = & (\hat{v} == T) \, ? \,
+																	(Cmd, \hat{m}) \, : \,
+																	(nl \, L, \hat{m})
+																	\quad (\hat{v} = \hat{\mathcal{V}} \, E \, \hat{m})\\
+\\																	
+% \hat{\mathcal{V}}
+	\hat{\mathcal{V}} & = & E \to \hat{\hat{m}emory} \to \hat{Val} \\
+	\hat{\mathcal{V}} \, n						\, \hat{m} & = & \alpha_{4} \{n\} \\
+	\hat{\mathcal{V}} \, \texttt{true}			\, \hat{m} & = & T \\
+	\hat{\mathcal{V}} \, \texttt{false}		\, \hat{m} & = & F \\
+	\hat{\mathcal{V}} \, x 					\, \hat{m} & = & \hat{m}(x) \\
+	\hat{\mathcal{V}} \, \texttt{*}x 			\, \hat{m} & = & \hat{m}(\hat{m}(x)) \\
+	\hat{\mathcal{V}} \, \texttt{\&}x 			\, \hat{m} & = & x \\
+	\hat{\mathcal{V}} \, E_1 \texttt{+} E_2 	\, \hat{m} & = & (\hat{\mathcal{V}} \, E_1 \, \hat{m}) \hat{+} (\hat{\mathcal{V}} \, E_1 \, \hat{m}) \\
+	\hat{\mathcal{V}} \, \texttt{-} E 			\, \hat{m} & = & \hat{-}(\hat{\mathcal{V}} \, E \, \hat{m}) \\
+	\hat{\mathcal{V}} \, E_1 \texttt{<} E_2		\, \hat{m} & = & n_1 \hat{<} n_2 \, ? \, T \, : \, F \\
+	\hat{\mathcal{V}} \, \texttt{read} 		\, \hat{m} & = & (\top, (-\infty, \infty)) \\
+\\
+% \hat{+}
+(\hat{p_1}, \hat{i_1}) \hat{+} (\hat{p_2}, \hat{i_2}) & = & (\hat{p_1} \,\, \hat{+_p} \,\, \hat{p_2}, \hat{i_1} \,\, \hat{+_i} \,\, \hat{i_2}) \\
+\\
+% \hat{+_p}
+\top \,\, \hat{+_p} \,\, \hat{p} & = & \top \\
+\hat{p} \,\, \hat{+_p} \,\, \top & = & \top \\
+\bot \,\, \hat{+_p} \,\, \hat{p} & = & \hat{p} \\
+\hat{p} \,\, \hat{+_p} \,\, \bot & = & \hat{p} \\
+\hat{p_1} \,\, \hat{+_p} \,\, \hat{p_2} & = & \hat{p_1} == \hat{p_2} ? even : odd \\
+\\
+% \hat{+_i}
+\top \,\, \hat{+_i} \,\, \hat{i} & = & \top \\
+\hat{i} \,\, \hat{+_i} \,\, \top & = & \top \\
+\bot \,\, \hat{+_i} \,\, \hat{i} & = & \hat{i} \\
+\hat{i} \,\, \hat{+_i} \,\, \bot & = & \hat{i} \\
+({low}_1, {high}_1) \,\, \hat{+_i} \,\, ({low}_2, {high}_2) & = & (\hat{min}({low}_1, {low}_2), \hat{max}({high}_1, {high}_2)) \\
+% \hat{min}, \hat{max}
+\\
+% \hat{-}
+\hat{-} (\hat{p}, \hat{i}) & = & (\hat{p}, \hat{-_i} \hat{i}) \\
+\\
+% \hat{-_i)
+\hat{-_i} \bot & = & \bot \\
+\hat{-_i} \top & = & \top \\
+\hat{-_i} (low, high) & = & (-high, -low) \\
+\\
+\end{eqnarray*}
+\end{document}
