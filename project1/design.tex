@@ -23,7 +23,7 @@
 	\subsection*{1. Definition of Domains}
 		\begin{align*}
 			M \in Memory = & \quad Loc \stackrel{\textrm{fin}}{\to} Val \\
-		  	         Loc = & \quad Var \\
+		  	l \in Loc = & \quad Var \\
 		  	v \in Val = & \quad \mathbb{Z} + \mathbb{B} + Loc \\
 			b \in \mathbb{B} = & \quad \{T, F\} \\
 			L \in Label = & \quad \mathbb{N} \\
@@ -31,18 +31,21 @@
 		\end{align*}
 		
 		\subsubsection*{Definition of Cmd}
+		Project1의 뼈대와 함께 제공된 type. 각각의 C에 Label을 추가한 형태.
 			\begin{align*}
 				Cmd \in Command = & \quad (Label \times Stmt) \\
 				Stmt \to & \quad \texttt{skip} \\
 				       | & \quad x \texttt{:=} E \\
 				       | & \quad \texttt{*}x \texttt{:=} E \\
-				       | & \quad C ; C \\
+				       | & \quad Cmd ; Cmd \\
 				       | & \quad \texttt{if} \, E \, Cmd \, Cmd \\
 				       | & \quad \texttt{while} \, E \, Cmd
 			\end{align*}
 		
 	\subsection*{2. Definition of $T_0$ }
-	
+	주어진 프로그램 C에 해당하는 $Command$를 $Cmd_{0}$라 했을 때 \\
+	$T_0 = (Cmd_0, Memory_{\bot}) $
+
 	\subsection*{3. Definition of $Next$ }
 		\begin{align*}
 			Next \in & \quad 2^{State} \to 2^{State} \\
@@ -52,22 +55,24 @@
 		\subsubsection*{Definition of $next$ }
 			\begin{align*}
 				next													 \in & \quad State \to State \\
-				next \, ((L, \texttt{skip}),							M) = & \quad (nl \, L, M) \\
-				next \, ((L, x \, \texttt{:=} \, E),					M) = & \quad (nl \, L, M\{x \mapsto v \} )		
+				next \, ((L, \texttt{skip}),							M) = & \quad (n \, L, M) \\
+				next \, ((L, x \, \texttt{:=} \, E),					M) = & \quad (n \, L, M\{x \mapsto v \} )		
 																				\quad (v (\in Var) = \mathcal{V} \, E \, M)\\
-				next \, ((L, \texttt{*}x \, \texttt{:=} \, E),		M) = & \quad (nl \, L, M\{l \mapsto v \} )	
+				next \, ((L, \texttt{*}x \, \texttt{:=} \, E),		M) = & \quad (n \, L, M\{l \mapsto v \} )	
 																				\quad (l (\in Loc) = M(x), v (\in Var) = \mathcal{V} \, E \, M)\\
+				next \, ((L, {Cmd}_1 \, ; \, {Cmd}_2),	M) = & \quad ({Cmd}_1, M) \\
 				next \, ((L, \texttt{if} \, E \, {Cmd}_1 \, {Cmd}_2),	M) = & \quad (b == T) \, ? \,
 																				({Cmd}_1, M) \, : \,
 																				({Cmd}_2, M)
 																				\quad (b (\in \mathbb{B}) = \mathcal{V} \, E \, M)\\
 				next \, ((L, \texttt{while} \, E \, Cmd),				M) = & \quad (b == T) \, ? \,
 																				(Cmd, M) \, : \,
-																				(nl \, L, M)
+																				(n \, L, M)
 																				\quad (b (\in \mathbb{B}) = \mathcal{V} \, E \, M)
 			\end{align*}																		
 			
-		\subsubsection*{Definition of $nl$}
+		\subsubsection*{Definition of $n$}
+		Project1의 뼈대와 함께 제공된 함수. 주어진 Label의 다음 Cmd를 리턴한다.
 	
 		\subsubsection*{Definition of $\mathcal{V}$}
 			\begin{align*}
@@ -164,18 +169,19 @@
 		\subsubsection*{Definition of $\hat{next}$ }
 			\begin{align*}
 				\hat{next} \in & \quad \hat{State} \to 2^{\hat{State}} \\
-				\hat{next} \, ((L, \texttt{skip})							\, \hat{m}) = & \quad \{ (nl \, L, \hat{m}) \} \\
-				\hat{next} \, ((L, x \, \texttt{:=} \, E)					\, \hat{m}) = & \quad \{ (nl \, L, \hat{m}\{x \mapsto \hat{v} \} ) \} 
+				\hat{next} \, ((L, \texttt{skip})							\, \hat{m}) = & \quad \{ (n \, L, \hat{m}) \} \\
+				\hat{next} \, ((L, x \, \texttt{:=} \, E)					\, \hat{m}) = & \quad \{ (n \, L, \hat{m}\{x \mapsto \hat{v} \} ) \} 
 																							\quad (\hat{v} (\in \hat{Val})= \hat{\mathcal{V}} \, E \, \hat{m}) \\
-				\hat{next} \, ((L, \texttt{*}x \, \texttt{:=} \, E)			\, \hat{m}) = & \quad \{ (nl \, L, \hat{m}\{\hat{l} \mapsto \hat{v} \} ) \}
+				\hat{next} \, ((L, \texttt{*}x \, \texttt{:=} \, E)			\, \hat{m}) = & \quad \{ (n \, L, \hat{m}\{\hat{l} \mapsto \hat{v} \} ) \}
 																							\quad (\hat{l} (\in \hat{Loc}) = \hat{m}(x), \hat{v} (\in \hat{Val}) = \hat{\mathcal{V}} \, E \, \hat{m})\\
+				\hat{next} \, ((L, {Cmd}_1 \, ; \, {Cmd}_2)	\, \hat{m}) = & \quad \{ ({Cmd}_1, \hat{m}) \} \\
 				\hat{next} \, ((L, \texttt{if} \, E \, {Cmd}_1 \, {Cmd}_2)	\, \hat{m}) = & \quad \hat{b} == \hat{T} \textrm{이면 } \{ ({Cmd}_1, \hat{m}) \}, \\
 																						  &	\quad \hat{b} == \hat{F} \textrm{이면 } \{ ({Cmd}_2, \hat{m}) \}, \\
 																						  & \quad \hat{b} == \top \textrm{이면 } \{ ({Cmd}_1, \hat{m}), ({Cmd}_2, \hat{m}) \} \\
 																						  & \quad (\hat{b} (\in \hat{\mathbb{B}}) = \hat{\mathcal{V}} \, E \, \hat{m})\\
 				\hat{next} \, ((L, \texttt{while} \, E \, Cmd) 				\, \hat{m}) = & \quad \hat{b} == \hat{T} \textrm{이면 } 	\{ (Cmd, \hat{m}) \}, \\
-																						  & \quad \hat{b} == \hat{F} \textrm{이면 } \{ (nl \, L, \hat{m}) \}, \\
-																						  & \quad \hat{b} == \top \textrm{이면 } \{ (Cmd, \hat{m}), (nl \, L, \hat{m})\} \\
+																						  & \quad \hat{b} == \hat{F} \textrm{이면 } \{ (n \, L, \hat{m}) \}, \\
+																						  & \quad \hat{b} == \top \textrm{이면 } \{ (Cmd, \hat{m}), (n \, L, \hat{m})\} \\
 																						  & \quad (\hat{b} (\in \hat{\mathbb{B}}) = \hat{\mathcal{V}} \, E \, \hat{m})
 			\end{align*}																	
 		
@@ -243,6 +249,32 @@
 				\hat{\pi} X = & \quad \{ \hat{\pi_l} L X | L \in Label \} \\
 				\hat{\pi_l} L X = & \quad \{ ((L', Stmt), \hat{m}) | ((L', Stmt), \hat{m}) \in X, L == L' \}
 			\end{align*}
-			
+	
+%\section*{안전성 증명}
+%	\subsection*{$\hat{next}$의 안정성 증명}
+%		$\hat{next}$의 조건: \\
+%		\[ \forall s \in State: next \, s \in (\wp_\cup(\gamma) \circ \hat{next} \circ \alpha) \{ s \} \]
+%		$State$는 $((Label \times Stmt) \times Memory)$이고, $Stmt$는 귀납적으로 정의되므로 귀납 증명을 통해 위의 조건이 언제나 성립하는 것을 확인한다.\\
+%
+%		Case1: $Stmt \to \texttt{skip} $ \\
+%		이 경우 다음 지점은 언제나 동일하므로 메모리의 상태가 위의 조건에 맞는지만 확인한다. $get_m$($\hat{get_m}$)을 $State$($2^{\hat{State}}$)에서 $Memory$($2^{\hat{Memory}}$)를 얻어내는 함수라고 하자. \\
+%		$ get_m (next \, s) = M $ \\
+%		$ \hat{get_m} (\wp_\cup(\gamma) \circ \hat{next} \circ \alpha (\{ s \})) = \gamma' \circ \alpha' (\{ M \}) $ \\
+%		갈로아 연결의 성질에 따라 $ M \in \gamma' \circ \alpha' (\{ M \})$. \\
+%		
+%		Case2: $Stmt \to x \texttt{:=} E $ \\
+%		\begin{align*}
+%			get_m (next \, s) = M\{ x \mapsto v \} \\
+%			\hat{get_m} (\wp_\cup(\gamma) \circ \hat{next} \circ \alpha (\{ s \})) = & \gamma' (\hat{m} \{ x \mapsto \hat{v} \}) \quad (\hat{m} = \alpha'(\{M\}), \hat{v} = \alpha_{Val}(\{ v \})\\
+%																				 = & \{ M\{ x \mapsto v' \} | v' \in \gamma_{Val} \circ \alpha_{Val} (\{v\}) \} \\
+%		\end{align*}
+%																				   
+%				갈로아 연결의 성질에 따라 $ M \in \gamma' \circ \alpha' \{ M \}$. 따라서 위의 조건이 성립한다. \\
+%		
+%		
+%		$ next ((L, x \textrm{:=} E), M) = (n \, L, M \{ x \mapsto v\}) $ \\
+%		$ (\wp_\cup(\gamma) \circ \hat{next} \circ \alpha) \{ ((L, x \textrm{:=} E), M) \} $ \\
+%		갈로아 연결의 성질에 따라 $ \forall l \in (Loc - x). M(x) \in \gamma' (\hat{m})(x) $, $ v \in \gamma' \circ \alpha'(\{v\}) $ \\
+%	\subsection*{$\hat{\pi}$의 안정성 증명}			
 	
 \end{document}
