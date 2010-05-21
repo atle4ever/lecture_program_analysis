@@ -5,7 +5,10 @@
 
 \usepackage{hangul}
 
+\usepackage{amsmath}
+
 \usepackage{amssymb}
+
 \usepackage{mathrsfs}
 
 \title{Project1 Report}
@@ -15,125 +18,231 @@
 \begin{document}
 \maketitle
 
-% Definition of State
-\begin{eqnarray*}
-	M \in Memory & = & Loc \stackrel{\textrm{fin}}{\to} Val \\
-  	l \in Loc & = & Var \\
-  	v \in Val & = & \mathbb{Z} + \mathbb{B} + Loc \\
-	b \in \mathbb{B} & = & \{T, F\} \\
-	L \in Label & = & \mathbb{N} \\
-	s \in State & = & ((Label \times Cmd) \times Memory) \\
-\\
-% Definition of T_0
-T_{0} & = & \{ <{Cmd}_{0},Memory_{\bot}> \} \quad ({Cmd}_{0}\textrm{는 제일 처음 실행되는 Cmd}) \\
-\\
-% Definition of Next
-Next & \in & 2^{State} \to 2^{State} \\
-	 & = & {\wp}(next) \quad ({\wp} = \lambda{}f.\lambda{}X. \{f x|x \in X\}) \\
-\\
-% Definition of next
-	next & \in & State \to State \\
-	next \, ((L, \texttt{skip})							\, M) & = & (nl \, L, M) \\
-	next \, ((L, x \, \texttt{:=} \, E)					\, M) & = & (nl \, L, M\{x \mapsto v \} ) \quad (v = \mathcal{V} \, E \, M)\\
-	next \, ((L, \texttt{*}x \, \texttt{:=} \, E)			\, M) & = & (nl \, L, M\{M(x) \mapsto v \} ) \quad (v = \mathcal{V} \, E \, M)\\
-	next \, ((L, \texttt{if} \, E \, {Cmd}_1 \, {Cmd}_2)	\, M) & = & (v == T) \, ? \,
-																	({Cmd}_1, M) \, : \,
-																	({Cmd}_2, M)
-																	\quad (v = \mathcal{V} \, E \, M)\\
-	next \, ((L, \texttt{while} \, E \, Cmd) 				\, M) & = & (v == T) \, ? \,
-																	(Cmd, M) \, : \,
-																	(nl \, L, M)
-																	\quad (v = \mathcal{V} \, E \, M)\\
-\\
-% Definition of nl
-% Evaluation of E
-	\mathcal{V} & = & E \to Memory \to Val \\
-	\mathcal{V} \, n						\, M & = & n \\
-	\mathcal{V} \, \texttt{true}			\, M & = & T \\
-	\mathcal{V} \, \texttt{false}		\, M & = & F \\
-	\mathcal{V} \, x 					\, M & = & M(x) \\
-	\mathcal{V} \, \texttt{*}x 			\, M & = & M(M(x)) \\
-	\mathcal{V} \, \texttt{\&}x 			\, M & = & x \\
-	\mathcal{V} \, E_1 \texttt{+} E_2 	\, M & = & (\mathcal{V} \, E_1 \, M) + (\mathcal{V} \, E_1 \, M) \\
-	\mathcal{V} \, \texttt{-} E 			\, M & = & -(\mathcal{V} \, E \, M) \\
-	\mathcal{V} \, E_1 \texttt{<} E_2		\, M & = & n_1 < n_2 \, ? \, T \, : \, F \\
-	\mathcal{V} \, \texttt{read} 		\, M & = & z \quad (z\textrm{는 임의의 정수}) \\
-\end{eqnarray*}
+\section*{프로그램 C의 모듬의미 정의}
 
-% Definition of \hat{State}
-\begin{eqnarray*}
-\hat{State} & = & ((Label \times Cmd) \times \hat{Memory}) \\
-\hat{m} \in \hat{Memory} & = & Loc \stackrel{\textrm{fin}}{\to} \hat{Val} \\
-\hat{Val} & = & \hat{\mathbb{Z}} + \mathbb{B} + Loc \\
-\hat{\mathbb{Z}} & = & (\hat{Parity} \times \hat{Interval}) \\
-\hat{p} \in \hat{Parity} & = & \{ \bot, \top, odd, even \} \\
-\hat{i} \in \hat{Interval} & = & \{ \bot \} \cup \{(a, b) \, | \, a \le b, \, a, b \in \mathbb{Z} \cup \{\infty, -\infty  \} 
-\\
-% 갈로아 짝
-{2}^{State} & \stackrel{\alpha}{\longrightarrow} & \hat{State} \\
-\alpha & = & {\alpha}_{1} \circ {\alpha}_{0} \\
-{2}^{State} & \stackrel{{\alpha}_{0}}{\longrightarrow} & ((Label \times Cmd) \times {2}^{Memory}) \\
-((Label \times Cmd) \times {2}^{Memory}) & \stackrel{{\alpha}_{1}}{\longrightarrow} & ((Label \times Cmd) \times \hat{Memory}) \\
-2^{Memory} & \stackrel{{\alpha}_{2}}{\longrightarrow} & \hat{Memory} \\
-2^{Memory} & \stackrel{{\alpha}_{3}}{\longrightarrow} & Loc \stackrel{\textrm{fin}}{\to} 2^{Val} \\
-2^{Val} & \stackrel{{\alpha}_{4}}{\longrightarrow} & \hat{Val} \\
-\\
-% \hat{Next}
-\hat{Next} & \in & {2}^{\hat{State}} \to {2}^{\hat{State}} \\
-		   & = & \wp(\sqcup) \circ \hat{\pi} \circ \wp(\hat{next}) \\
-\\
-% \hat{next}
-	\hat{next} & \in & \hat{State} \to \hat{State} \\
-	\hat{next} \, ((L, \texttt{skip})							\, \hat{m}) & = & (nl \, L, \hat{m}) \\
-	\hat{next} \, ((L, x \, \texttt{:=} \, E)					\, \hat{m}) & = & (nl \, L, \hat{m}\{x \mapsto \hat{v} \} ) \quad (\hat{v} = \hat{\mathcal{V}} \, E \, \hat{m})\\
-	\hat{next} \, ((L, \texttt{*}x \, \texttt{:=} \, E)			\, \hat{m}) & = & (nl \, L, \hat{m}\{\hat{m}(x) \mapsto \hat{v} \} ) \quad (\hat{v} = \hat{\mathcal{V}} \, E \, \hat{m})\\
-	\hat{next} \, ((L, \texttt{if} \, E \, {Cmd}_1 \, {Cmd}_2)	\, \hat{m}) & = & (\hat{v} == T) \, ? \,
-																	({Cmd}_1, \hat{m}) \, : \,
-																	({Cmd}_2, \hat{m})
-																	\quad (\hat{v} = \hat{\mathcal{V}} \, E \, \hat{m})\\
-	\hat{next} \, ((L, \texttt{while} \, E \, Cmd) 				\, \hat{m}) & = & (\hat{v} == T) \, ? \,
-																	(Cmd, \hat{m}) \, : \,
-																	(nl \, L, \hat{m})
-																	\quad (\hat{v} = \hat{\mathcal{V}} \, E \, \hat{m})\\
-\\																	
-% \hat{\mathcal{V}}
-	\hat{\mathcal{V}} & = & E \to \hat{\hat{m}emory} \to \hat{Val} \\
-	\hat{\mathcal{V}} \, n						\, \hat{m} & = & \alpha_{4} \{n\} \\
-	\hat{\mathcal{V}} \, \texttt{true}			\, \hat{m} & = & T \\
-	\hat{\mathcal{V}} \, \texttt{false}		\, \hat{m} & = & F \\
-	\hat{\mathcal{V}} \, x 					\, \hat{m} & = & \hat{m}(x) \\
-	\hat{\mathcal{V}} \, \texttt{*}x 			\, \hat{m} & = & \hat{m}(\hat{m}(x)) \\
-	\hat{\mathcal{V}} \, \texttt{\&}x 			\, \hat{m} & = & x \\
-	\hat{\mathcal{V}} \, E_1 \texttt{+} E_2 	\, \hat{m} & = & (\hat{\mathcal{V}} \, E_1 \, \hat{m}) \hat{+} (\hat{\mathcal{V}} \, E_1 \, \hat{m}) \\
-	\hat{\mathcal{V}} \, \texttt{-} E 			\, \hat{m} & = & \hat{-}(\hat{\mathcal{V}} \, E \, \hat{m}) \\
-	\hat{\mathcal{V}} \, E_1 \texttt{<} E_2		\, \hat{m} & = & n_1 \hat{<} n_2 \, ? \, T \, : \, F \\
-	\hat{\mathcal{V}} \, \texttt{read} 		\, \hat{m} & = & (\top, (-\infty, \infty)) \\
-\\
-% \hat{+}
-(\hat{p_1}, \hat{i_1}) \hat{+} (\hat{p_2}, \hat{i_2}) & = & (\hat{p_1} \,\, \hat{+_p} \,\, \hat{p_2}, \hat{i_1} \,\, \hat{+_i} \,\, \hat{i_2}) \\
-\\
-% \hat{+_p}
-\top \,\, \hat{+_p} \,\, \hat{p} & = & \top \\
-\hat{p} \,\, \hat{+_p} \,\, \top & = & \top \\
-\bot \,\, \hat{+_p} \,\, \hat{p} & = & \hat{p} \\
-\hat{p} \,\, \hat{+_p} \,\, \bot & = & \hat{p} \\
-\hat{p_1} \,\, \hat{+_p} \,\, \hat{p_2} & = & \hat{p_1} == \hat{p_2} ? even : odd \\
-\\
-% \hat{+_i}
-\top \,\, \hat{+_i} \,\, \hat{i} & = & \top \\
-\hat{i} \,\, \hat{+_i} \,\, \top & = & \top \\
-\bot \,\, \hat{+_i} \,\, \hat{i} & = & \hat{i} \\
-\hat{i} \,\, \hat{+_i} \,\, \bot & = & \hat{i} \\
-({low}_1, {high}_1) \,\, \hat{+_i} \,\, ({low}_2, {high}_2) & = & (\hat{min}({low}_1, {low}_2), \hat{max}({high}_1, {high}_2)) \\
-% \hat{min}, \hat{max}
-\\
-% \hat{-}
-\hat{-} (\hat{p}, \hat{i}) & = & (\hat{p}, \hat{-_i} \hat{i}) \\
-\\
-% \hat{-_i)
-\hat{-_i} \bot & = & \bot \\
-\hat{-_i} \top & = & \top \\
-\hat{-_i} (low, high) & = & (-high, -low) \\
-\\
-\end{eqnarray*}
+	\subsection*{1. Definition of Domains}
+		\begin{align*}
+			M \in Memory = & \quad Loc \stackrel{\textrm{fin}}{\to} Val \\
+		  	         Loc = & \quad Var \\
+		  	v \in Val = & \quad \mathbb{Z} + \mathbb{B} + Loc \\
+			b \in \mathbb{B} = & \quad \{T, F\} \\
+			L \in Label = & \quad \mathbb{N} \\
+			s \in State = & \quad ((Label \times Stmt) \times Memory)
+		\end{align*}
+		
+		\subsubsection*{Definition of Cmd}
+			\begin{align*}
+				Cmd \in Command = & \quad (Label \times Stmt) \\
+				Stmt \to & \quad \texttt{skip} \\
+				       | & \quad x \texttt{:=} E \\
+				       | & \quad \texttt{*}x \texttt{:=} E \\
+				       | & \quad C ; C \\
+				       | & \quad \texttt{if} \, E \, Cmd \, Cmd \\
+				       | & \quad \texttt{while} \, E \, Cmd
+			\end{align*}
+		
+	\subsection*{2. Definition of $T_0$ }
+	
+	\subsection*{3. Definition of $Next$ }
+		\begin{align*}
+			Next \in & \quad 2^{State} \to 2^{State} \\
+				   = & \quad {\wp}(next) \quad ({\wp} = \lambda{}f.\lambda{}X. \{f x|x \in X\})
+		\end{align*}
+		
+		\subsubsection*{Definition of $next$ }
+			\begin{align*}
+				next													 \in & \quad State \to State \\
+				next \, ((L, \texttt{skip}),							M) = & \quad (nl \, L, M) \\
+				next \, ((L, x \, \texttt{:=} \, E),					M) = & \quad (nl \, L, M\{x \mapsto v \} )		
+																				\quad (v (\in Var) = \mathcal{V} \, E \, M)\\
+				next \, ((L, \texttt{*}x \, \texttt{:=} \, E),		M) = & \quad (nl \, L, M\{l \mapsto v \} )	
+																				\quad (l (\in Loc) = M(x), v (\in Var) = \mathcal{V} \, E \, M)\\
+				next \, ((L, \texttt{if} \, E \, {Cmd}_1 \, {Cmd}_2),	M) = & \quad (b == T) \, ? \,
+																				({Cmd}_1, M) \, : \,
+																				({Cmd}_2, M)
+																				\quad (b (\in \mathbb{B}) = \mathcal{V} \, E \, M)\\
+				next \, ((L, \texttt{while} \, E \, Cmd),				M) = & \quad (b == T) \, ? \,
+																				(Cmd, M) \, : \,
+																				(nl \, L, M)
+																				\quad (b (\in \mathbb{B}) = \mathcal{V} \, E \, M)
+			\end{align*}																		
+			
+		\subsubsection*{Definition of $nl$}
+	
+		\subsubsection*{Definition of $\mathcal{V}$}
+			\begin{align*}
+				\mathcal{V} \in & \quad E \to Memory \to Val \\
+				\mathcal{V} \, n						\, M = & \quad n \\
+				\mathcal{V} \, \texttt{true}			\, M = & \quad T \\
+				\mathcal{V} \, \texttt{false}		\, M = & \quad F \\
+				\mathcal{V} \, x 					\, M = & \quad M(x) \\
+				\mathcal{V} \, \texttt{*}x 			\, M = & \quad M(l) \quad (l (\in Loc) = M(x)) \\
+				\mathcal{V} \, \texttt{\&}x 			\, M = & \quad x \\
+				\mathcal{V} \, E_1 \texttt{+} E_2 	\, M = & \quad n_1 + n_2 
+																\quad (n_1, n_2 \in \mathbb{Z}
+																, n_1 = \mathcal{V} \, E_1 \, M
+																, n_2 = \mathcal{V} \, E_2 \, M) \\
+				\mathcal{V} \, \texttt{-} E 			\, M = & \quad -n \quad (n (\in \mathbb{Z}) = \mathcal{V} \, E \, M) \\
+				\mathcal{V} \, E_1 \texttt{<} E_2		\, M = & \quad n_1 < n_2 \, ? \, T \, : \, F 
+																\quad (n_1, n_2 \in \mathbb{Z}
+																, n_1 = \mathcal{V} \, E_1 \, M
+																, n_2 = \mathcal{V} \, E_2 \, M) \\
+				\mathcal{V} \, \texttt{read} 		\, M = & \quad z \quad (z(\in \mathbb{Z}) \textrm{는 임의의 정수}) \\
+			\end{align*}
+		
+
+	\section*{프로그램 C의 정적분석 결과}
+	
+	\subsection*{1. Definition of Domains}
+		\begin{align*}
+			\hat{State} 					= & \quad ((Label \times Stmt) \times \hat{Memory}) \\
+			\hat{m} \in \hat{Memory} 	= & \quad Loc \stackrel{\textrm{fin}}{\to} \hat{Val} \\
+			\hat{Val} 					= & \quad \{\bot_{\hat{Val}}, \top_{\hat{Val}} \} \cup \hat{\mathbb{Z}} + \hat{\mathbb{B}} + \hat{Loc} \\
+			\hat{\mathbb{Z}} 			= & \quad (\hat{Parity} \times \hat{Interval}) \\
+			\hat{p} \in \hat{Parity} 	= & \quad \{ \bot_{\hat{P}}, \top_{\hat{P}}, odd, even \} \\
+			\hat{i} \in \hat{Interval} 	= & \quad \{ \bot_{\hat{I}} \} \cup \{(a, b) \, | \, a \le b, \, a, b \in \mathbb{Z} \cup \{\infty, -\infty  \} \\
+			\hat{\mathbb{B}} 			= & \quad \{\bot_{\hat{\mathbb{B}}}, \top_{\hat{\mathbb{B}}}, \hat{T}, \hat{F}\} \\
+			\hat{Loc} 					= & \quad 2^{Loc} \\
+		\end{align*}
+	
+	\subsection*{2. 갈로아 연결}
+		\begin{align*}
+			{2}^{State} \stackrel{\alpha}{\longrightarrow} 			& \quad \hat{State} \\
+			2^{Memory} \stackrel{\alpha'}{\longrightarrow} 			& \quad \hat{Memory} \\
+			2^{Val} \stackrel{{\alpha}_{Val}}{\longrightarrow} 		& \quad \hat{Val} \\
+			2^{Val} \stackrel{{\alpha}_{p}}{\longrightarrow} 			& \quad \hat{Parity} \\
+			2^{Val} \stackrel{{\alpha}_{i}}{\longrightarrow} 			& \quad \hat{Interval} \\
+			2^{Val} \stackrel{{\alpha}_{\mathbb{B}}}{\longrightarrow} & \quad \hat{\mathbb{B}} \\
+			2^{Val} \stackrel{{\alpha}_{\mathbb{Z}}}{\longrightarrow} & \quad \hat{\mathbb{Z}} \\
+			2^{Val} \stackrel{{\alpha}_{Loc}}{\longrightarrow} 		& \quad \hat{Loc} \\
+		\end{align*}			
+
+		\begin{align*}
+			{\alpha}_{Val} X = & \quad X \subseteq \mathbb{B} \textrm{이면 } \alpha_{\mathbb{B}} X, \\
+						    & \quad X \subseteq Loc \textrm{이면 } \alpha_{Loc} X, \\
+						    & \quad X \subseteq \mathbb{Z} \textrm{이면 } \alpha_{\mathbb{Z}} X, \\
+						    & \quad \textrm{그 외의 경우 } \top
+		\end{align*}			
+		\begin{align*}						    
+			\alpha_{\mathbb{B}} \{ \} = & \quad \bot \\
+			\alpha_{\mathbb{B}} \{ T \} = & \quad \hat{T} \\
+			\alpha_{\mathbb{B}} \{ F \} = & \quad \hat{F} \\
+			\alpha_{\mathbb{B}} \{ T, F \} = & \quad \top
+		\end{align*}			
+		\begin{align*}			
+			\alpha_{Loc} X = & \quad X
+		\end{align*}			
+		\begin{align*}
+			\alpha_{\mathbb{Z}} X = & \quad (\alpha_p X, \alpha_i X)
+		\end{align*}			
+		\begin{align*}
+			\alpha_{p} X = 	& \quad X\textrm{의 모든 원소가 짝수이면 } even, \\
+							& \quad X\textrm{의 모든 원소가 홀수이면 } odd, \\
+							& \quad \textrm{그 외의 경우 } \top
+		\end{align*}
+		\begin{align*}
+			\alpha_{i} X = & \quad (min X, max X) \\
+			min X = & \quad X\textrm{의 원소 중 최소값} \\
+			max X = & \quad X\textrm{의 원소 중 최대값}
+		\end{align*}
+		
+		\begin{align*}
+			\alpha' X = & \quad \{ x \mapsto \alpha_{Val} (\bigcup_{M \in X}M(x)) | x \in Var\} \\
+		\end{align*}	
+		
+		\begin{align*}
+			\alpha X = & \quad ((L, Cmd), \alpha'(\{M | (L, Cmd, M) \in X \})) \\
+		\end{align*}
+		
+
+	\subsection*{3. Definition of $\hat{Next}$ }
+		\begin{align*}
+			\hat{Next} \in & \quad {2}^{\hat{State}} \to {2}^{\hat{State}} \\
+					   = & \quad \wp(\sqcup) \circ \hat{\pi} \circ \wp_{\cup}(\hat{next})
+		\end{align*}
+	
+		\subsubsection*{Definition of $\hat{next}$ }
+			\begin{align*}
+				\hat{next} \in & \quad \hat{State} \to 2^{\hat{State}} \\
+				\hat{next} \, ((L, \texttt{skip})							\, \hat{m}) = & \quad \{ (nl \, L, \hat{m}) \} \\
+				\hat{next} \, ((L, x \, \texttt{:=} \, E)					\, \hat{m}) = & \quad \{ (nl \, L, \hat{m}\{x \mapsto \hat{v} \} ) \} 
+																							\quad (\hat{v} (\in \hat{Val})= \hat{\mathcal{V}} \, E \, \hat{m}) \\
+				\hat{next} \, ((L, \texttt{*}x \, \texttt{:=} \, E)			\, \hat{m}) = & \quad \{ (nl \, L, \hat{m}\{\hat{l} \mapsto \hat{v} \} ) \}
+																							\quad (\hat{l} (\in \hat{Loc}) = \hat{m}(x), \hat{v} (\in \hat{Val}) = \hat{\mathcal{V}} \, E \, \hat{m})\\
+				\hat{next} \, ((L, \texttt{if} \, E \, {Cmd}_1 \, {Cmd}_2)	\, \hat{m}) = & \quad \hat{b} == \hat{T} \textrm{이면 } \{ ({Cmd}_1, \hat{m}) \}, \\
+																						  &	\quad \hat{b} == \hat{F} \textrm{이면 } \{ ({Cmd}_2, \hat{m}) \}, \\
+																						  & \quad \hat{b} == \top \textrm{이면 } \{ ({Cmd}_1, \hat{m}), ({Cmd}_2, \hat{m}) \} \\
+																						  & \quad (\hat{b} (\in \hat{\mathbb{B}}) = \hat{\mathcal{V}} \, E \, \hat{m})\\
+				\hat{next} \, ((L, \texttt{while} \, E \, Cmd) 				\, \hat{m}) = & \quad \hat{b} == \hat{T} \textrm{이면 } 	\{ (Cmd, \hat{m}) \}, \\
+																						  & \quad \hat{b} == \hat{F} \textrm{이면 } \{ (nl \, L, \hat{m}) \}, \\
+																						  & \quad \hat{b} == \top \textrm{이면 } \{ (Cmd, \hat{m}), (nl \, L, \hat{m})\} \\
+																						  & \quad (\hat{b} (\in \hat{\mathbb{B}}) = \hat{\mathcal{V}} \, E \, \hat{m})
+			\end{align*}																	
+		
+		\subsubsection*{Definition of $\hat{\mathcal{V}}$ }
+			\begin{align*}
+				\hat{\mathcal{V}} \in & \quad E \to \hat{Memory} \to \hat{Val} \\
+				\hat{\mathcal{V}} \, n						\, \hat{m} = & \quad \alpha_{\mathbb{Z}} (\{n\}) \\
+				\hat{\mathcal{V}} \, \texttt{true}			\, \hat{m} = & \quad \hat{T} \\
+				\hat{\mathcal{V}} \, \texttt{false}		\, \hat{m} = & \quad \hat{F} \\
+				\hat{\mathcal{V}} \, x 					\, \hat{m} = & \quad \hat{m}(x) \\
+				\hat{\mathcal{V}} \, \texttt{*}x 			\, \hat{m} = & \quad \hat{m}(\hat{l}) \quad (\hat{l} (\in \hat{Loc}) = \hat{m}(x)) \\
+				\hat{\mathcal{V}} \, \texttt{\&}x 			\, \hat{m} = & \quad \{x\} \\
+				\hat{\mathcal{V}} \, E_1 \texttt{+} E_2 	\, \hat{m} = & \quad \hat{n_1} + \hat{n_2} 
+																\quad (\hat{n_1}, \hat{n_2} \in \hat{\mathbb{Z}}
+																, \hat{n_1} = \hat{\mathcal{V}} \, E_1 \, \hat{m}
+																, \hat{n_2} = \hat{\mathcal{V}} \, E_2 \, \hat{m}) \\
+				\hat{\mathcal{V}} \, \texttt{-} E 			\, \hat{m} = & \quad -\hat{n} \quad (\hat{n} (\in \hat{\mathbb{Z}}) = \hat{\mathcal{V}} \, E \, \hat{m}) \\
+				\hat{\mathcal{V}} \, E_1 \texttt{<} E_2		\, \hat{m} = & \quad \hat{n_1} \hat{<} \hat{n_2} 
+																\quad (\hat{n_1}, \hat{n_2} \in \hat{\mathbb{Z}}
+																, \hat{n_1} = \hat{\mathcal{V}} \, E_1 \, M
+																, \hat{n_2} = \hat{\mathcal{V}} \, E_2 \, M) \\
+				\hat{\mathcal{V}} \, \texttt{read} 		\, \hat{m} = & \quad (\top, (-\infty, \infty)) \\
+		\end{align*}
+
+		\subsubsection*{Definition of $\hat{+}$}
+			\begin{align*}
+				(\hat{p_1}, \hat{i_1}) \hat{+} (\hat{p_2}, \hat{i_2}) = & \quad (\hat{p_1} \,\, \hat{+_p} \,\, \hat{p_2}, \hat{i_1} \,\, \hat{+_i} \,\, \hat{i_2})
+				% \hat{+_p}
+				\top \,\, \hat{+_p} \,\, \hat{p} = & \quad \top \\
+				\hat{p} \,\, \hat{+_p} \,\, \top = & \quad \top \\
+				\bot \,\, \hat{+_p} \,\, \hat{p} = & \quad \hat{p} \\
+				\hat{p} \,\, \hat{+_p} \,\, \bot = & \quad \hat{p} \\
+				\hat{p_1} \,\, \hat{+_p} \,\, \hat{p_2} = & \quad \hat{p_1} == \hat{p_2} ? even : odd \\\\
+				% \hat{+_i}
+				\top \,\, \hat{+_i} \,\, \hat{i} = & \quad \top \\
+				\hat{i} \,\, \hat{+_i} \,\, \top = & \quad \top \\
+				\bot \,\, \hat{+_i} \,\, \hat{i} = & \quad \hat{i} \\
+				\hat{i} \,\, \hat{+_i} \,\, \bot = & \quad \hat{i} \\
+				({low}_1, {high}_1) \,\, \hat{+_i} \,\, ({low}_2, {high}_2) = & \quad (\hat{min}({low}_1, {low}_2), \hat{max}({high}_1, {high}_2)) \\\\
+				% \hat{min}, \hat{max}
+				\hat{min} (a, b) = & \quad a, b \textrm{중 작은 값} \\
+				\hat{max} (a, b) = & \quad a, b \textrm{중 큰 값} \\
+				& \quad (\forall a \in \mathbb{Z} \cup \{-\infty\}.a < \infty, \forall a \in \mathbb{Z} \cup \{\infty\}.-\infty < a)
+			\end{align*}
+		
+		\subsubsection*{Definition of $\hat{-}$}
+			\begin{align*}
+				\hat{-} (\hat{p}, \hat{i}) = & \quad (\hat{p}, \hat{-_i} \hat{i}) \\\\
+				% \hat{-_i)
+				\hat{-_i} \bot = & \quad \bot \\
+				\hat{-_i} \top = & \quad \top \\
+				\hat{-_i} (low, high) = & \quad (-high, -low)
+			\end{align*}
+			
+		\subsubsection*{Definition of $\hat{<}$}
+			\begin{align*}
+				(p1, (low1, high1)) \hat{<} (p2, (low2, high2)) = & \quad high1 < low2 \textrm{이면 } \hat{T}) \\
+																& \quad high2 < low1 \textrm{이면 } \hat{F}) \\
+																& \quad \textrm{그 외의 경우 } \top
+			\end{align*}
+	
+		\subsubsection*{Definition of $\hat{\pi}$}
+			\begin{align*}
+				\hat{\pi} \in & \quad 2^{\hat{State} \to \hat{State}} \\
+				\hat{\pi} X = & \quad \{ \hat{\pi_l} L X | L \in Label \} \\
+				\hat{\pi_l} L X = & \quad \{ ((L', Stmt), \hat{m}) | ((L', Stmt), \hat{m}) \in X, L == L' \}
+			\end{align*}
+			
+	
 \end{document}
