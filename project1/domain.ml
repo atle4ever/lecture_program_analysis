@@ -1,3 +1,5 @@
+open K
+
 module Parity =
 struct
   type t = BOT | EVEN | ODD | TOP
@@ -101,8 +103,8 @@ struct
 
   let bot = BOT
   let top = TOP
-  let t = TRUE
-  let f = FALSE
+  let mt = TRUE
+  let mf = FALSE
 
   let join b1 b2 =
     match b1, b2 with
@@ -164,6 +166,33 @@ struct
 
   let top = TOP
 
+  let z_of : t -> Z.t
+    = fun v ->
+      match v with
+          Z z -> z
+        | Bool _ -> raise (Error "Bool is used as Z")
+        | Loc _ -> raise (Error "Loc is used as Z")
+        | BOT -> raise (Error "BOT is used as Z")
+        | TOP -> raise (Error "TOP is used as Z")
+
+  let b_of : t -> Bool.t
+    = fun v ->
+      match v with
+          Bool b  -> b
+        | Z z -> raise (Error "Z is used as Bool")
+        | Loc _ -> raise (Error "Loc is used as Bool")
+        | BOT -> raise (Error "BOT is used as Bool")
+        | TOP -> raise (Error "TOP is used as Bool")
+
+  let l_of : t -> Loc.t
+    = fun v ->
+      match v with
+          Loc l -> l
+        | Z _ -> raise (Error "Z is used as Loc")
+        | Bool _ -> raise (Error "Bool is used as Loc")
+        | BOT -> raise (Error "BOT is used as Loc")
+        | TOP -> raise (Error "TOP is used as Loc")
+
   let join v1 v2 =
     match v1, v2 with
         BOT, _ -> v2
@@ -199,8 +228,34 @@ struct
   let equal m1 m2 = equal Val.eq m1 m2
 end
 
+
 module State =
 struct
-  type t = K.cmd * (Val.t M.t)
+  type t = cmd * (Val.t M.t)
+
+  let compare s1 s2 = 1
 end
+
+module StateMap =
+struct
+  include Map.Make(
+    struct
+      type t = cmd
+      let compare = fun (l1, stmt1) (l2, stmt2) -> l2 - l1
+    end
+  )
+
+  let join sm1 sm2 =
+    fold (fun c m sm ->
+            let m2 =
+              try find c sm2
+              with Not_found -> M.empty
+            in
+              add c (M.join m m2) sm
+         ) sm1 sm1
+
+  let singleton c m =
+    add c m empty
+end
+
 (*****************)

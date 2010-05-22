@@ -1,4 +1,4 @@
-OBJS=lexer.cmo parser.cmo domain.cmo k.cmo analyzer.cmo main.cmo
+OBJS=lexer.cmo parser.cmo k.cmo domain.cmo analyzer.cmo main.cmo
 NATIVE_OBJS=lexer.cmx parser.cmx domain.cmx k.cmx analyzer.cmx main.cmx
 
 all: $(OBJS)
