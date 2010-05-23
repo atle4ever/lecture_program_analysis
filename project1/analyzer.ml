@@ -16,7 +16,7 @@ end
 
 module Analyzer : ANALYZER =
 struct
-  type state
+  type state = State.t
   type solution = label -> state
 
 (*
@@ -47,85 +47,75 @@ struct
     get_next (find pgm [])
 
   (****************)
+  let add_p : Parity.t -> Parity.t -> Parity.t
+    = fun p1 p2 ->
+      match p1, p2 with
+          Parity.TOP, _ -> p1
+        | _, Parity.TOP -> p2
+        | p1, p2 -> if Parity.eq p1 p2 then Parity.even else Parity.odd
+
+  let add_i : Interval.t -> Interval.t -> Interval.t
+    = fun i1 i2 ->
+      match i1, i2 with
+          (l1, h1), (l2, h2) ->
+            (Interval.min_bound l1 l2, Interval.max_bound h1 h2)
+
+  let add : Z.t -> Z.t -> Z.t
+    = fun (p1, i1) (p2, i2) -> (add_p p1 p2, add_i i1 i2)
+
+  let minus_b : Interval.bound -> Interval.bound
+    = fun b ->
+      match b with
+          Interval.Z n -> Interval.Z(-n)
+        | Interval.Pinfty -> Interval.Ninfty
+        | Interval.Ninfty -> Interval.Pinfty
+
+  let minus_i : Interval.t -> Interval.t
+    = fun i ->
+      match i with
+        (l, h) -> (minus_b h, minus_b l)
+
+  let minus : Z.t -> Z.t
+    = fun (p, i) -> (p, minus_i i)
+
+  let p_of : int -> Parity.t
+    = fun i -> if (i mod 2) == 0 then Parity.even else Parity.odd
+
+  let rec eval : exp -> (Val.t M.t) -> Val.t
+    = fun e m ->
+      match e with
+          NUM i -> Val.Z (p_of i, Interval.make i i)
+        | TRUE -> Val.Bool Bool.mt
+        | FALSE -> Val.Bool Bool.mf
+        | ADD (e1, e2) ->
+            let z1 = Val.z_of (eval e1 m) in
+            let z2 = Val.z_of (eval e2 m) in
+              Val.Z (add z1 z2)
+        | MINUS (e1) ->
+            let z = Val.z_of (eval e1 m) in
+              Val.Z (minus z)
+
+        | VAR x -> M.lookup x m
+        | STAR x ->
+            let ls = Val.l_of (M.lookup x m) in
+            let l = Loc.min_elt ls in
+            let v = M.lookup l m in
+              Loc.fold (fun l v -> Val.join v (M.lookup l m)) ls v
+        | AMPER x -> Val.Loc (Loc.singleton x)
+        | READ -> Val.Z (Parity.top, Interval.top)
+
+  let beval : bexp -> (Val.t M.t) -> Bool.t
+    = fun (LESS (e1, e2)) m ->
+      let (_, i1) = Val.z_of (eval e1 m) in
+      let (_, i2) = Val.z_of (eval e2 m) in
+        match (i1, i2) with
+            (l1, h1), (l2, h2) ->
+              if Interval.eq_bound (Interval.max_bound h1 l2) l2 then Bool.mt
+              else if Interval.eq_bound (Interval.max_bound h2 l1) l1 then Bool.mf
+              else Bool.top
 
   let analyze : program -> solution
     = fun pgm ->
-      let add_p : Parity.t -> Parity.t -> Parity.t
-        = fun p1 p2 ->
-          match p1, p2 with
-              Parity.TOP, _ -> p1
-            | _, Parity.TOP -> p2
-            | Parity.BOT, _ -> p2
-            | _, Parity.BOT -> p1
-            | p1, p2 -> if Parity.eq p1 p2 then Parity.even else Parity.odd
-      in
-
-      let add_i : Interval.t -> Interval.t -> Interval.t
-        = fun i1 i2 ->
-          match i1, i2 with
-              Interval.TOP, _ -> i1
-            | _, Interval.TOP -> i2
-            | Interval.BOT, _ -> i2
-            | _, Interval.BOT -> i1
-            | Interval.ELT (l1, h1), Interval.ELT (l2, h2) ->
-                Interval.ELT (Interval.min_bound l1 l2, Interval.max_bound h1 h2)
-      in
-      let add : Z.t -> Z.t -> Z.t
-        = fun (p1, i1) (p2, i2) -> (add_p p1 p2, add_i i1 i2)
-      in
-      let minus_b : Interval.bound -> Interval.bound
-        = fun b ->
-          match b with
-              Interval.Z n -> Interval.Z(-n)
-            | Interval.Pinfty -> Interval.Ninfty
-            | Interval.Ninfty -> Interval.Pinfty
-      in
-      let minus_i : Interval.t -> Interval.t
-        = fun i ->
-          match i with
-              Interval.TOP -> Interval.TOP
-            | Interval.BOT -> Interval.BOT
-            | Interval.ELT (l, h) -> Interval.ELT (minus_b h, minus_b l)
-      in
-      let minus : Z.t -> Z.t
-        = fun (p, i) -> (p, minus_i i)
-      in
-      let p_of : int -> Parity.t
-        = fun i -> if (i mod 2) == 0 then Parity.even else Parity.odd
-      in
-      let rec eval : exp -> (Val.t M.t) -> Val.t
-        = fun e m ->
-          match e with
-              NUM i -> Val.Z (p_of i, Interval.make i i)
-            | TRUE -> Val.Bool Bool.mt
-            | FALSE -> Val.Bool Bool.mf
-            | ADD (e1, e2) ->
-                let z1 = Val.z_of (eval e1 m) in
-                let z2 = Val.z_of (eval e2 m) in
-                  Val.Z (add z1 z2)
-            | MINUS (e1) ->
-                let z = Val.z_of (eval e1 m) in
-                  Val.Z (minus z)
-
-            | VAR x -> M.lookup x m
-            | STAR x ->
-                let l = Val.l_of (M.lookup x m) in
-                  Loc.fold (fun l v -> Val.join v (M.lookup l m)) l Val.BOT
-            | AMPER x -> Val.Loc (Loc.singleton x)
-            | READ -> Val.Z (Parity.top, Interval.top)
-      in
-      let beval : bexp -> (Val.t M.t) -> Bool.t
-        = fun (LESS (e1, e2)) m ->
-          let (_, i1) = Val.z_of (eval e1 m) in
-          let (_, i2) = Val.z_of (eval e2 m) in
-            match (i1, i2) with
-                Interval.BOT, _ | _, Interval.BOT | Interval.TOP , _ | _, Interval.TOP -> raise (Error "Invalid Z")
-              | Interval.ELT (l1, h1), Interval.ELT (l2, h2) ->
-                  if Interval.eq_bound (Interval.max_bound h1 l2) l2 then Bool.mt
-                  else if Interval.eq_bound (Interval.max_bound h2 l1) l1 then Bool.mf
-                  else Bool.top
-      in
-
       let next : State.t -> (Val.t M.t StateMap.t)
         = fun s ->
           match s with
@@ -137,16 +127,36 @@ struct
             | _ -> raise (Error "Not implemented next")
       in
       let large_next : (Val.t M.t StateMap.t) -> (Val.t M.t StateMap.t)
-        = fun sl ->
+        = fun sm ->
           StateMap.fold (fun c m sm ->
-                           let sm2 = next (c, m) in
+             let sm2 = next (c, m) in
                              StateMap.join sm sm2
-                        )  sl StateMap.empty
+                        )  sm StateMap.empty
       in
-        (fun x -> (pgm, M.empty))
+      let rec fix : (Val.t M.t StateMap.t) -> (Val.t M.t StateMap.t)
+        = fun sm ->
+          let sm' = StateMap.join sm (large_next sm) in
+            if StateMap.eq sm sm' then
+              sm'
+            else
+              fix sm'
+      in
+      let sm = StateMap.add pgm M.empty StateMap.empty in
+      let sm' = fix sm in
+        StateMap.fold (fun (l, stmt) m sol ->
+                         fun l' ->
+                           if l' == l then ((l, stmt), m)
+                           else sol l'
+                      ) sm' (fun l' -> raise (Error "Invalid Label"))
 
-      let get_state _ _ = raise (Error "Not implemented")
-  let get_parity_of _ _ = raise (Error "Not implemented")
-  let get_interval_of _ _ = raise (Error "Not implemented")
+  let get_state l sol = sol l
+  let get_parity_of id (c, m) =
+    let (p, i) = Val.z_of (M.lookup id m) in
+      p
+
+  let get_interval_of id (c, m) =
+    let (p, i) = Val.z_of (M.lookup id m) in
+      i
+
     (****************)
 end

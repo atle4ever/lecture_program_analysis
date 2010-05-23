@@ -2,32 +2,27 @@ open K
 
 module Parity =
 struct
-  type t = BOT | EVEN | ODD | TOP
+  type t = EVEN | ODD | TOP
 
-  let bot = BOT
   let top = TOP
   let even = EVEN
   let odd = ODD
 
   let join prty1 prty2 =
     match prty1, prty2 with
-        BOT, _ -> prty2
-      | _, BOT -> prty1
-      | EVEN, EVEN | ODD, ODD -> prty1
+        EVEN, EVEN | ODD, ODD -> prty1
       | _, _ -> TOP
 
   let eq prty1 prty2 =
     match prty1, prty2 with
-        BOT, BOT -> true
-      | TOP, TOP -> true
+        TOP, TOP -> true
       | EVEN, EVEN -> true
       | ODD, ODD -> true
       | _, _ -> false
 
   let string_of e =
     match e with
-        BOT -> "bot"
-      | TOP -> "top"
+        TOP -> "top"
       | EVEN -> "even"
       | ODD -> "odd"
 end
@@ -35,13 +30,15 @@ end
 module Interval =
 struct
   type bound = Z of int | Pinfty | Ninfty
-  exception Undefined
-  type t = BOT | TOP | ELT of bound * bound
 
-  let bot = BOT
-  let top = TOP
+  type t = bound * bound
 
-  let make l h = ELT (Z l, Z h)
+  let top = (Ninfty, Pinfty)
+  let make l h =
+    if h < l then
+      raise (Error "Invalid Z. low > high")
+    else
+      (Z l, Z h)
 
   let min_bound b1 b2 =
     match b1, b2 with
@@ -67,27 +64,19 @@ struct
 
   let join itv1 itv2 =
     match itv1, itv2 with
-        BOT, _ -> itv2
-      | _, BOT -> itv1
-      | TOP, _ -> TOP
-      | _, TOP -> TOP
-      | ELT (l1, h1), ELT (l2, h2) ->
-          ELT (min_bound l1 l2, max_bound h1 h2)
+        (l1, h1), (l2, h2) ->
+          (min_bound l1 l2, max_bound h1 h2)
 
   let eq itv1 itv2 =
     match itv1, itv2 with
-        BOT, BOT -> true
-      | TOP, TOP -> true
-      | ELT (l1, h1), ELT (l2, h2) ->
+        (l1, h1), (l2, h2) ->
           eq_bound l1 l2 && eq_bound h1 h2
-      | _, _ -> false
 
   let rec string_of e =
     match e with
-        BOT -> "bot"
-      | TOP -> "[-inf, +inf]"
-      | ELT (l, u) ->
+        (l, u) ->
           "[" ^ string_of_bound l ^ ", " ^ string_of_bound u ^ "]"
+
   and string_of_bound b =
     match b with
         Z i -> string_of_int i
@@ -95,36 +84,29 @@ struct
       | Ninfty -> "-inf"
 end
 
-
-(*****************)
 module Bool =
 struct
-  type t = BOT | TRUE | FALSE | TOP
+  type t = TRUE | FALSE | TOP
 
-  let bot = BOT
   let top = TOP
   let mt = TRUE
   let mf = FALSE
 
   let join b1 b2 =
     match b1, b2 with
-        BOT, _ -> b2
-      | _, BOT -> b1
-      | TRUE, TRUE | FALSE, FALSE -> b1
+        TRUE, TRUE | FALSE, FALSE -> b1
       | _, _ -> TOP
 
   let eq prty1 prty2 =
     match prty1, prty2 with
-        BOT, BOT -> true
-      | TOP, TOP -> true
+        TOP, TOP -> true
       | TRUE, TRUE -> true
       | FALSE, FALSE -> true
       | _, _ -> false
 
   let string_of e =
     match e with
-        BOT -> "bot"
-      | TOP -> "top"
+        TOP -> "top"
       | TRUE -> "true"
       | FALSE -> "false"
 end
@@ -132,9 +114,6 @@ end
 module Z =
 struct
   type t = Parity.t * Interval.t
-
-  let bot = (Parity.bot, Interval.bot)
-  let top = (Parity.top, Interval.top)
 
   let join (p1, i1) (p2, i2) =
     (Parity.join p1 p2, Interval.join i1 i2)
@@ -156,13 +135,14 @@ struct
 
   let eq loc1 loc2 =
     equal loc1 loc2
+
+  let string_of ls =
+    (fold (fun l str -> str ^ l ^ " ") ls "(") ^ ")"
 end
 
 module Val =
 struct
-  type t = BOT | TOP | Z of Z.t | Bool of Bool.t | Loc of Loc.t
-
-  let bot = BOT
+  type t = TOP | Z of Z.t | Bool of Bool.t | Loc of Loc.t
 
   let top = TOP
 
@@ -172,7 +152,6 @@ struct
           Z z -> z
         | Bool _ -> raise (Error "Bool is used as Z")
         | Loc _ -> raise (Error "Loc is used as Z")
-        | BOT -> raise (Error "BOT is used as Z")
         | TOP -> raise (Error "TOP is used as Z")
 
   let b_of : t -> Bool.t
@@ -181,7 +160,6 @@ struct
           Bool b  -> b
         | Z z -> raise (Error "Z is used as Bool")
         | Loc _ -> raise (Error "Loc is used as Bool")
-        | BOT -> raise (Error "BOT is used as Bool")
         | TOP -> raise (Error "TOP is used as Bool")
 
   let l_of : t -> Loc.t
@@ -190,26 +168,29 @@ struct
           Loc l -> l
         | Z _ -> raise (Error "Z is used as Loc")
         | Bool _ -> raise (Error "Bool is used as Loc")
-        | BOT -> raise (Error "BOT is used as Loc")
         | TOP -> raise (Error "TOP is used as Loc")
 
   let join v1 v2 =
     match v1, v2 with
-        BOT, _ -> v2
-      | _, BOT -> v1
-      | Z z1, Z z2 -> Z (Z.join z1 z2)
+        Z z1, Z z2 -> Z (Z.join z1 z2)
       | Bool b1, Bool b2 -> Bool (Bool.join b1 b2)
       | Loc l1, Loc l2 -> Loc (Loc.join l1 l2)
       | _, _ -> TOP
 
   let eq v1 v2 =
     match v1, v2 with
-        BOT, BOT -> true
-      | TOP, TOP -> true
+        TOP, TOP -> true
       | Z z1, Z z2 -> Z.eq z1 z2
       | Bool b1, Bool b2 -> Bool.eq b1 b2
       | Loc l1, Loc l2 -> Loc.eq l1 l2
       | _, _ -> false
+
+  let string_of v =
+    match v with
+        TOP -> "top"
+      | Z z -> "Z[" ^ (Z.string_of z) ^ "]"
+      | Bool b -> "B[" ^ (Bool.string_of b) ^ "]"
+      | Loc l -> "L[" ^ (Loc.string_of l) ^ "]"
 end
 
 module M =
@@ -218,44 +199,58 @@ struct
 
   let bind x v m = add x v m
   let lookup x m = find x m
-
   let join m1 m2 =
     fold (fun x v1 joined_m ->
-              let v2 = try lookup x joined_m with Not_found -> Val.bot in
-                bind x (Val.join v1 v2) joined_m
-           ) m1 m2
+            try let v2 = lookup x joined_m in bind x (Val.join v1 v2) joined_m
+            with Not_found -> bind x v1 joined_m
+         ) m1 m2
 
-  let equal m1 m2 = equal Val.eq m1 m2
+  let eq m1 m2 = equal Val.eq m1 m2
+
+  let string_of m =
+    (fold (fun x v str -> str ^ x ^ " -> " ^ (Val.string_of v) ^ ", ") m "{ ") ^ "}"
 end
 
+module Cmd =
+struct
+  type t = cmd
+
+  let compare c1 c2 =
+    match c1, c2 with
+        (l1, stmt1), (l2, stmt2) -> l2 - l1
+
+  let eq c1 c2 =
+    (compare c1 c2) == 0
+end
 
 module State =
 struct
   type t = cmd * (Val.t M.t)
 
-  let compare s1 s2 = 1
+  let eq s1 s2 =
+    match s1, s2 with
+        (c1, m1), (c2, m2) -> (Cmd.eq c1 c2) & (M.eq m1 m2)
 end
 
 module StateMap =
 struct
-  include Map.Make(
-    struct
-      type t = cmd
-      let compare = fun (l1, stmt1) (l2, stmt2) -> l2 - l1
-    end
-  )
+  include Map.Make(struct type t = cmd let compare = Cmd.compare end)
 
   let join sm1 sm2 =
     fold (fun c m sm ->
             let m2 =
-              try find c sm2
+              try find c sm
               with Not_found -> M.empty
             in
               add c (M.join m m2) sm
-         ) sm1 sm1
+         ) sm1 sm2
 
   let singleton c m =
     add c m empty
+
+  let eq sm1 sm2 =
+    equal M.eq sm1 sm2
+
 end
 
 (*****************)
