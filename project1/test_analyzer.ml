@@ -37,7 +37,7 @@ let test_m _ =
     assert_bool "test1" (M.eq (M.join m1 m2) r1);
     assert_bool "test2" (M.eq (M.join m1 m3) r2)
 
-let suite = "Domain" >:::
+let suite = "Analyzer" >:::
   ["Interval" >:: test_interval;
    "M" >:: test_m
   ]

@@ -252,5 +252,4 @@ struct
     equal M.eq sm1 sm2
 
 end
-
 (*****************)

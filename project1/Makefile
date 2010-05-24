@@ -1,6 +1,6 @@
 OBJS=lexer.cmo parser.cmo k.cmo domain.cmo analyzer.cmo main.cmo
 NATIVE_OBJS=lexer.cmx parser.cmx domain.cmx k.cmx analyzer.cmx main.cmx
-TEST_OBJS=k.cmo domain.cmo analyzer.cmo test_domain.cmo test_suite.cmo
+TEST_OBJS=k.cmo domain.cmo analyzer.cmo test_domain.cmo test_analyzer.cmo test_suite.cmo
 
 all: $(OBJS)
 	ocamlc -o main $(OBJS)
