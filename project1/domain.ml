@@ -8,6 +8,8 @@ struct
   let even = EVEN
   let odd = ODD
 
+  let convert i = if (i mod 2) == 0 then EVEN else ODD
+
   let join prty1 prty2 =
     match prty1, prty2 with
         EVEN, EVEN | ODD, ODD -> prty1
@@ -40,6 +42,15 @@ struct
     else
       (Z l, Z h)
 
+  let add_bound b1 b2 =
+    match b1, b2 with
+        Pinfty, Ninfty | Ninfty, Pinfty -> raise (Error "Invalid operation (Pinfty + Ninfty)")
+      | Pinfty, _ -> b1
+      | _, Pinfty -> b2
+      | Ninfty, _ -> b2
+      | _, Ninfty -> b1
+      | Z z1, Z z2 -> Z (z1 + z2)
+
   let min_bound b1 b2 =
     match b1, b2 with
         Pinfty, _ -> b2
@@ -62,15 +73,37 @@ struct
       | Ninfty, Ninfty -> true
       | _, _ -> false
 
+  let less_bound b1 b2 =
+    match b1, b2 with
+        Pinfty, Pinfty | Ninfty, Ninfty -> false
+      | _, Pinfty | Ninfty, _ -> true
+      | Z i1, Z i2 -> i1 < i2
+      | _ -> false
+
   let join itv1 itv2 =
     match itv1, itv2 with
         (l1, h1), (l2, h2) ->
           (min_bound l1 l2, max_bound h1 h2)
 
+  let widen itv1 itv2 =
+    match itv1, itv2 with
+        (l1, h1), (l2, h2) ->
+          ((if less_bound l2 l1 then Ninfty else l1), (if less_bound l1 h2 then Pinfty else h2))
+
   let eq itv1 itv2 =
     match itv1, itv2 with
         (l1, h1), (l2, h2) ->
           eq_bound l1 l2 && eq_bound h1 h2
+
+  let desc b =
+    match b with
+        Pinfty | Ninfty -> b
+      | Z i -> Z (i-1)
+
+  let incr b =
+    match b with
+        Pinfty | Ninfty -> b
+      | Z i -> Z (i+1)
 
   let rec string_of e =
     match e with
@@ -117,6 +150,9 @@ struct
 
   let join (p1, i1) (p2, i2) =
     (Parity.join p1 p2, Interval.join i1 i2)
+
+  let widen (p1, i1) (p2, i2) =
+    (Parity.join p1 p2, Interval.widen i1 i2)
 
   let eq (p1, i1) (p2, i2) =
     (Parity.eq p1 p2) && (Interval.eq i1 i2)
@@ -177,6 +213,13 @@ struct
       | Loc l1, Loc l2 -> Loc (Loc.join l1 l2)
       | _, _ -> TOP
 
+  let widen v1 v2 =
+    match v1, v2 with
+        Z z1, Z z2 -> Z (Z.widen z1 z2)
+      | Bool b1, Bool b2 -> Bool (Bool.join b1 b2)
+      | Loc l1, Loc l2 -> Loc (Loc.join l1 l2)
+      | _, _ -> TOP
+
   let eq v1 v2 =
     match v1, v2 with
         TOP, TOP -> true
@@ -200,9 +243,15 @@ struct
   let bind x v m = add x v m
   let lookup x m = find x m
   let join m1 m2 =
-    fold (fun x v1 joined_m ->
-            try let v2 = lookup x joined_m in bind x (Val.join v1 v2) joined_m
-            with Not_found -> bind x v1 joined_m
+    fold (fun x v1 m' ->
+            try let v2 = lookup x m' in bind x (Val.join v1 v2) m'
+            with Not_found -> bind x v1 m'
+         ) m1 m2
+
+  let widen m1 m2 =
+    fold (fun x v1 m' ->
+            try let v2 = lookup x m' in bind x (Val.widen v1 v2) m'
+            with Not_found -> bind x v1 m'
          ) m1 m2
 
   let eq m1 m2 = equal Val.eq m1 m2
@@ -243,6 +292,12 @@ struct
               with Not_found -> M.empty
             in
               add c (M.join m m2) sm
+         ) sm1 sm2
+
+  let widen sm1 sm2 =
+    fold (fun c m sm ->
+            try let m2 = find c sm in add c (M.widen m m2) sm
+            with Not_found -> add c m sm
          ) sm1 sm2
 
   let singleton c m =

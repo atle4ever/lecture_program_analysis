@@ -55,10 +55,7 @@ struct
         | p1, p2 -> if Parity.eq p1 p2 then Parity.even else Parity.odd
 
   let add_i : Interval.t -> Interval.t -> Interval.t
-    = fun i1 i2 ->
-      match i1, i2 with
-          (l1, h1), (l2, h2) ->
-            (Interval.min_bound l1 l2, Interval.max_bound h1 h2)
+    = fun (l1, h1) (l2, h2) -> (Interval.add_bound l1 l2, Interval.add_bound h1 h2)
 
   let add : Z.t -> Z.t -> Z.t
     = fun (p1, i1) (p2, i2) -> (add_p p1 p2, add_i i1 i2)
@@ -78,13 +75,10 @@ struct
   let minus : Z.t -> Z.t
     = fun (p, i) -> (p, minus_i i)
 
-  let p_of : int -> Parity.t
-    = fun i -> if (i mod 2) == 0 then Parity.even else Parity.odd
-
   let rec eval : exp -> (Val.t M.t) -> Val.t
     = fun e m ->
       match e with
-          NUM i -> Val.Z (p_of i, Interval.make i i)
+          NUM i -> Val.Z (Parity.convert i, Interval.make i i)
         | TRUE -> Val.Bool Bool.mt
         | FALSE -> Val.Bool Bool.mf
         | ADD (e1, e2) ->
@@ -108,49 +102,121 @@ struct
     = fun (LESS (e1, e2)) m ->
       let (_, i1) = Val.z_of (eval e1 m) in
       let (_, i2) = Val.z_of (eval e2 m) in
-        match (i1, i2) with
+        match i1, i2 with
             (l1, h1), (l2, h2) ->
-              if Interval.eq_bound (Interval.max_bound h1 l2) l2 then Bool.mt
-              else if Interval.eq_bound (Interval.max_bound h2 l1) l1 then Bool.mf
+              if (* h1 < l2 *) Interval.less_bound h1 l2 then Bool.mt
+              else if (* h2 < l1 *) Interval.less_bound h2 l1 then Bool.mf
               else Bool.top
+
+  let part (LESS (e1, e2)) m =
+    let part_left (p, (l, h)) (l', h') =
+      let b = Interval.desc h' in
+        (Val.Z (p, (l, b)), Val.Z (p, (l', h)))
+    in
+
+    let part_right (p, (l, h)) (l', h') =
+      let b = Interval.incr l' in
+        (Val.Z (p, (b, h)), Val.Z (p, (l, l')))
+    in
+
+    let (p1, i1) = Val.z_of (eval e1 m) in
+    let (p2, i2) = Val.z_of (eval e2 m) in
+      match e1, e2 with
+          VAR x, _ ->
+            let (v1, v2) = part_left (p1, i1) i2 in
+              (M.add x v1 m, M.add x v2 m)
+
+        | _, VAR x ->
+            let (v1, v2) = part_right (p2, i2) i1 in
+              (M.add x v1 m, M.add x v2 m)
+        | _ -> (m, m)
+
+  let next : program -> State.t -> (Val.t M.t StateMap.t)
+    = fun pgm s ->
+      match s with
+          (l, SKIP), m -> StateMap.singleton (n pgm l) m
+        | (l, ASSIGN (x, e)), m ->
+            let v = eval e m in
+              StateMap.singleton (n pgm l) (M.bind x v m)
+        | (l, ASSIGNSTAR(x, e)), m ->
+            let ls = Val.l_of (M.lookup x m) in
+            let v = eval e m in
+            let nc = n pgm l in
+              Loc.fold (fun l sm -> StateMap.join (StateMap.singleton nc (M.bind l v m)) sm) ls StateMap.empty
+        | (l, SEQ (c1, c2)), m -> StateMap.singleton c1 m
+        | (l, IF (be, c1, c2)), m ->
+            let b = beval be m in
+              (
+                match b with
+                    Bool.TRUE -> StateMap.singleton c1 m
+                  | Bool.FALSE -> StateMap.singleton c2 m
+                  | Bool.TOP ->
+                      let m1, m2 = part be m in
+                        StateMap.join (StateMap.singleton c1 m1) (StateMap.singleton c2 m2)
+              )
+        | (l, WHILE (be, c1)), m ->
+            let b = beval be m in
+              (
+                match b with
+                    Bool.TRUE -> StateMap.singleton c1 m
+                  | Bool.FALSE -> StateMap.singleton (n pgm l) m
+                  | Bool.TOP ->
+                      let m1, m2 = part be m in
+                        StateMap.join (StateMap.singleton c1 m1) (StateMap.singleton (n pgm l) m2)
+              )
+
+        | (l, END), m -> StateMap.empty
+
+  let large_next : program -> (Val.t M.t StateMap.t) -> (Val.t M.t StateMap.t)
+    = fun pgm sm ->
+      StateMap.fold (fun c m sm ->
+                       let sm2 = next pgm (c, m) in
+                         StateMap.join sm sm2
+                    )  sm StateMap.empty
 
   let analyze : program -> solution
     = fun pgm ->
-      let next : State.t -> (Val.t M.t StateMap.t)
-        = fun s ->
-          match s with
-              (l, SKIP), m -> StateMap.singleton (n pgm l) m
-            | (l, ASSIGN (x, e)), m ->
-                let v = eval e m in
-                  StateMap.singleton (n pgm l) (M.bind x v m)
-            | (l, SEQ (c1, c2)), m -> StateMap.singleton c1 m
-            | _ -> raise (Error "Not implemented next")
+      let rec fix sm n =
+          let sm' = StateMap.join sm (large_next pgm sm) in
+            if StateMap.eq sm sm' then
+              (sm', true)
+            else
+              if n == 0 then
+                (sm', false)
+              else
+                fix sm' (n-1)
       in
-      let large_next : (Val.t M.t StateMap.t) -> (Val.t M.t StateMap.t)
-        = fun sm ->
-          StateMap.fold (fun c m sm ->
-             let sm2 = next (c, m) in
-                             StateMap.join sm sm2
-                        )  sm StateMap.empty
-      in
-      let rec fix : (Val.t M.t StateMap.t) -> (Val.t M.t StateMap.t)
-        = fun sm ->
-          let sm' = StateMap.join sm (large_next sm) in
+      let rec widen sm =
+          let sm' = StateMap.widen sm (large_next pgm sm) in
             if StateMap.eq sm sm' then
               sm'
             else
-              fix sm'
+              widen sm'
       in
+
       let sm = StateMap.add pgm M.empty StateMap.empty in
-      let sm' = fix sm in
+      let (sm', isFixed) = fix sm 10000 in
+      let sm' = if isFixed then sm' else (print_string "widen"; print_newline(); widen sm') in
+        StateMap.iter (fun (l, stmt) m ->
+                         print_string ("label " ^ (string_of_int l) ^ ":\n" ^ M.string_of m);
+                         print_newline()
+                      ) sm';
         StateMap.fold (fun (l, stmt) m sol ->
                          fun l' ->
                            if l' == l then ((l, stmt), m)
                            else sol l'
                       ) sm' (fun l' -> raise (Error "Invalid Label"))
 
+
   let get_state l sol = sol l
+
   let get_parity_of id (c, m) =
+    let v = M.lookup id m in
+      match v with
+          Val.Z (p, _) -> p
+        | Val.TOP -> Parity.top
+        | _ ->
+
     let (p, i) = Val.z_of (M.lookup id m) in
       p
 
