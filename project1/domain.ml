@@ -90,6 +90,11 @@ struct
         (l1, h1), (l2, h2) ->
           ((if less_bound l2 l1 then Ninfty else l1), (if less_bound l1 h2 then Pinfty else h2))
 
+  let narrow itv1 itv2 =
+    match itv1, itv2 with
+        (l1, h1), (l2, h2) ->
+          ((if l1 == Ninfty then l2 else l1), (if h1 == Pinfty then h2 else h1))
+
   let eq itv1 itv2 =
     match itv1, itv2 with
         (l1, h1), (l2, h2) ->
@@ -153,6 +158,9 @@ struct
 
   let widen (p1, i1) (p2, i2) =
     (Parity.join p1 p2, Interval.widen i1 i2)
+
+  let narrow (p1, i1) (p2, i2) =
+    (Parity.join p1 p2, Interval.narrow i1 i2)
 
   let eq (p1, i1) (p2, i2) =
     (Parity.eq p1 p2) && (Interval.eq i1 i2)
@@ -220,6 +228,13 @@ struct
       | Loc l1, Loc l2 -> Loc (Loc.join l1 l2)
       | _, _ -> TOP
 
+  let narrow v1 v2 =
+    match v1, v2 with
+        Z z1, Z z2 -> Z (Z.narrow z1 z2)
+      | Bool b1, Bool b2 -> Bool (Bool.join b1 b2)
+      | Loc l1, Loc l2 -> Loc (Loc.join l1 l2)
+      | _, _ -> TOP
+
   let eq v1 v2 =
     match v1, v2 with
         TOP, TOP -> true
@@ -251,6 +266,12 @@ struct
   let widen m1 m2 =
     fold (fun x v1 m' ->
             try let v2 = lookup x m' in bind x (Val.widen v1 v2) m'
+            with Not_found -> bind x v1 m'
+         ) m1 m2
+
+  let narrow m1 m2 =
+    fold (fun x v1 m' ->
+            try let v2 = lookup x m' in bind x (Val.narrow v1 v2) m'
             with Not_found -> bind x v1 m'
          ) m1 m2
 
@@ -297,6 +318,12 @@ struct
   let widen sm1 sm2 =
     fold (fun c m sm ->
             try let m2 = find c sm in add c (M.widen m m2) sm
+            with Not_found -> add c m sm
+         ) sm1 sm2
+
+  let narrow sm1 sm2 =
+    fold (fun c m sm ->
+            try let m2 = find c sm in add c (M.narrow m m2) sm
             with Not_found -> add c m sm
          ) sm1 sm2
 

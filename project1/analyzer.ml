@@ -111,12 +111,12 @@ struct
   let part (LESS (e1, e2)) m =
     let part_left (p, (l, h)) (l', h') =
       let b = Interval.desc h' in
-        (Val.Z (p, (l, b)), Val.Z (p, (l', h)))
+        (Val.Z (p, (l, Interval.min_bound b h)), Val.Z (p, (Interval.max_bound l' l, h)))
     in
 
     let part_right (p, (l, h)) (l', h') =
       let b = Interval.incr l' in
-        (Val.Z (p, (b, h)), Val.Z (p, (l, l')))
+        (Val.Z (p, (Interval.max_bound b l, h)), Val.Z (p, (l, Interval.max_bound h h')))
     in
 
     let (p1, i1) = Val.z_of (eval e1 m) in
@@ -176,16 +176,6 @@ struct
 
   let analyze : program -> solution
     = fun pgm ->
-      let rec fix sm n =
-          let sm' = StateMap.join sm (large_next pgm sm) in
-            if StateMap.eq sm sm' then
-              (sm', true)
-            else
-              if n == 0 then
-                (sm', false)
-              else
-                fix sm' (n-1)
-      in
       let rec widen sm =
           let sm' = StateMap.widen sm (large_next pgm sm) in
             if StateMap.eq sm sm' then
@@ -194,19 +184,26 @@ struct
               widen sm'
       in
 
+      let rec narrow sm =
+          let sm' = StateMap.narrow sm (large_next pgm sm) in
+            if StateMap.eq sm sm' then
+              sm'
+            else
+              narrow sm'
+      in
+
       let sm = StateMap.add pgm M.empty StateMap.empty in
-      let (sm', isFixed) = fix sm 10000 in
-      let sm' = if isFixed then sm' else (print_string "widen"; print_newline(); widen sm') in
+      let sm' = widen sm in
+      let sm'' = narrow sm' in
         StateMap.iter (fun (l, stmt) m ->
                          print_string ("label " ^ (string_of_int l) ^ ":\n" ^ M.string_of m);
                          print_newline()
-                      ) sm';
+                      ) sm'';
         StateMap.fold (fun (l, stmt) m sol ->
                          fun l' ->
                            if l' == l then ((l, stmt), m)
                            else sol l'
-                      ) sm' (fun l' -> raise (Error "Invalid Label"))
-
+                      ) sm'' (fun l' -> raise (Error "Invalid Label"))
 
   let get_state l sol = sol l
 
