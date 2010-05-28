@@ -379,18 +379,15 @@ struct
             Loc.fold (fun l v -> Val.join v (M.lookup l m)) ls v
       | AMPER x -> Val.Loc (Loc.singleton x)
       | READ -> Val.Z (Parity.top, Interval.top)
-
-  and beval : bexp -> (Val.t M.t) -> Bool.t
-    = fun be m ->
-      let LESS (e1, e2) = be in
-      let _, i1 = Val.z_of (eval e1 m) in
-      let _, i2 = Val.z_of (eval e2 m) in
-        match i1, i2 with
-            Interval.ELT (l1, h1), Interval.ELT (l2, h2) ->
-              if (* h1 < l2 *) Interval.less_bound h1 l2 then Bool.mt
-              else if (* h2 < l1 *) Interval.less_bound h2 l1 then Bool.mf
-              else Bool.top
-          | _ -> raise (Error "Invalid beval")
+      | LESS (e1, e2) ->
+          let _, i1 = Val.z_of (eval e1 m) in
+          let _, i2 = Val.z_of (eval e2 m) in
+            match i1, i2 with
+                Interval.ELT (l1, h1), Interval.ELT (l2, h2) ->
+                  if (* h1 < l2 *) Interval.less_bound h1 l2 then Val.Bool Bool.mt
+                  else if (* h2 < l1 *) Interval.less_bound h2 l1 then Val.Bool Bool.mf
+                  else Val.Bool Bool.top
+              | _ -> raise (Error "Invalid beval")
 
   let part_left : Z.t -> Interval.t -> (Val.t * Val.t) =
     fun z i' ->
@@ -414,9 +411,8 @@ struct
           Val.Z (p, Interval.ELT (l, Interval.max_bound h h'))
         )
 
-  let part : bexp -> (Val.t M.t) -> (Val.t M.t * Val.t M.t) =
-    fun be m ->
-      let LESS (e1, e2) = be in
+  let part : exp -> exp -> (Val.t M.t) -> (Val.t M.t * Val.t M.t) =
+    fun e1 e2 m ->
       let (p1, i1) = Val.z_of (eval e1 m) in
       let (p2, i2) = Val.z_of (eval e2 m) in
         match e1, e2 with
@@ -444,25 +440,35 @@ struct
                   StateMap.join (StateMap.singleton nc (M.bind l v m)) sm
               ) ls StateMap.empty
         | (l, SEQ (c1, c2)), m -> StateMap.singleton c1 m
-        | (l, IF (be, c1, c2)), m ->
-            let b = beval be m in
+        | (l, IF (e, c1, c2)), m ->
+            let b = Val.b_of (eval e m) in
               (
                 match b with
                     Bool.TRUE -> StateMap.singleton c1 m
                   | Bool.FALSE -> StateMap.singleton c2 m
                   | Bool.TOP ->
-                      let m1, m2 = part be m in
-                        StateMap.join (StateMap.singleton c1 m1) (StateMap.singleton c2 m2)
+                      match e with
+                          VAR x -> StateMap.join (StateMap.singleton c1 (M.bind x (Val.Bool Bool.mt) m)) (StateMap.singleton c2 (M.bind x (Val.Bool Bool.mf) m))
+                        | STAR x -> StateMap.join (StateMap.singleton c1 m) (StateMap.singleton c2 m)
+                        | LESS (e1, e2) ->
+                            let m1, m2 = part e1 e2 m in
+                              StateMap.join (StateMap.singleton c1 m1) (StateMap.singleton c2 m2)
+                        | _ -> raise (Error "Invalid condition of if")
               )
-        | (l, WHILE (be, c1)), m ->
-            let b = beval be m in
+        | (l, WHILE (e, c1)), m ->
+            let b = Val.b_of (eval e m) in
               (
                 match b with
                     Bool.TRUE -> StateMap.singleton c1 m
                   | Bool.FALSE -> StateMap.singleton (n pgm l) m
                   | Bool.TOP ->
-                      let m1, m2 = part be m in
-                        StateMap.join (StateMap.singleton c1 m1) (StateMap.singleton (n pgm l) m2)
+                      match e with
+                          VAR x -> StateMap.join (StateMap.singleton c1 (M.bind x (Val.Bool Bool.mt) m)) (StateMap.singleton (n pgm l) (M.bind x (Val.Bool Bool.mf) m))
+                        | STAR x -> StateMap.join (StateMap.singleton c1 m) (StateMap.singleton (n pgm l) m)
+                        | LESS (e1, e2) ->
+                            let m1, m2 = part e1 e2 m in
+                              StateMap.join (StateMap.singleton c1 m1) (StateMap.singleton (n pgm l) m2)
+                        | _ -> raise (Error "Invalid condition of while")
               )
         | (l, END), m -> StateMap.empty
 

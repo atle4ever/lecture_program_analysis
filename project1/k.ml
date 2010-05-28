@@ -8,8 +8,8 @@ and stmt = SKIP
 	   | ASSIGN of id * exp
 	   | ASSIGNSTAR of id * exp
 	   | SEQ of cmd * cmd
-	   | IF of bexp * cmd * cmd
-	   | WHILE of bexp * cmd
+	   | IF of exp * cmd * cmd
+	   | WHILE of exp * cmd
        | END
 and exp = NUM of int 
 	  | TRUE
@@ -20,7 +20,7 @@ and exp = NUM of int
 	  | STAR of id
 	  | AMPER of id
 	  | READ
-and bexp = LESS of exp * exp
+	  | LESS of exp * exp
 type program = cmd
 
 let rec string_of_exp e = match e with
@@ -33,16 +33,15 @@ let rec string_of_exp e = match e with
   | READ -> "read"
   | TRUE -> "true"
   | FALSE -> "false"
-and string_of_bexp = function
-	LESS (e1, e2) -> "("^(string_of_exp e1)^" + "^(string_of_exp e2)^")"
+  |	LESS (e1, e2) -> "("^(string_of_exp e1)^" + "^(string_of_exp e2)^")"
 
 and string_of_stmt s = match s with
     SKIP -> "skip"
   | ASSIGN(x, e) -> x^" := "^(string_of_exp e)
   | ASSIGNSTAR(x, e) -> "*"^x^" := "^(string_of_exp e)
   | SEQ(c1, c2) -> (string_of_cmd c1)^";\n"^(string_of_cmd c2)
-  | IF(e, c1, c2) -> "if ("^(string_of_bexp e)^")"^(string_of_cmd c1)^"\n"^(string_of_cmd c2)
-  | WHILE(e, c) -> "while "^(string_of_bexp e)^"\n"^(string_of_cmd c)
+  | IF(e, c1, c2) -> "if ("^(string_of_exp e)^")"^(string_of_cmd c1)^"\n"^(string_of_cmd c2)
+  | WHILE(e, c) -> "while "^(string_of_exp e)^"\n"^(string_of_cmd c)
   | END -> "end"
 and string_of_cmd (l, stmt) =
   (string_of_int l)^": "^(string_of_stmt stmt)

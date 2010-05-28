@@ -10,7 +10,6 @@
 %type <K.cmd> main
 %type <K.cmd> cmd
 %type <K.exp> expr
-%type <K.bexp> bexpr
 %left PLUS LESS SEMICOLON
 %nonassoc IF WHILE
 %nonassoc MINUS
@@ -25,8 +24,8 @@ SKIP {incr label; (!label, K.SKIP) }
 | ID ASSIGN expr {incr label; (!label, K.ASSIGN($1, $3)) }
 | STAR ID ASSIGN expr { incr label; (!label, K.ASSIGNSTAR($2, $4)) }
 | cmd SEMICOLON cmd { incr label; (!label, K.SEQ($1, $3)) }
-| IF bexpr cmd cmd { incr label; (!label, K.IF($2, $3, $4)) }
-| WHILE bexpr cmd { incr label; (!label, K.WHILE($2, $3)) }
+| IF expr cmd cmd { incr label; (!label, K.IF($2, $3, $4)) }
+| WHILE expr cmd { incr label; (!label, K.WHILE($2, $3)) }
 
 expr:
 INT { K.NUM $1 }
@@ -39,7 +38,4 @@ INT { K.NUM $1 }
 | STAR ID { K.STAR $2 }
 | AMPER ID { K.AMPER $2 }
 | READ { K.READ }
-
-bexpr:
-expr LESS expr { K.LESS($1, $3) }
-| LPAREN bexpr RPAREN { $2 }
+| expr LESS expr { K.LESS($1, $3) }

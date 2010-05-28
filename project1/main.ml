@@ -31,18 +31,15 @@ let rec get_ids_e e =
     | K.ADD (e1, e2) -> IDS.union (get_ids_e e1) (get_ids_e e2)
     | K.MINUS e1 -> get_ids_e e1
     | K.VAR id | K.STAR id | K.AMPER id -> IDS.singleton id
-
-let rec get_ids_be e =
-  match e with
-      K.LESS (e1, e2) -> IDS.union (get_ids_e e1) (get_ids_e e2)
+    | K.LESS (e1, e2) -> IDS.union (get_ids_e e1) (get_ids_e e2)
 
 let rec get_ids (l, stmt) =
   match stmt with
       K.SKIP -> IDS.empty
     | K.ASSIGN (id, e) | K.ASSIGNSTAR(id, e) -> IDS.union (IDS.singleton id) (get_ids_e e)
     | K.SEQ (c1, c2) -> IDS.union (get_ids c1) (get_ids c2)
-    | K.IF (be, c1, c2) -> IDS.union (get_ids_be be) (IDS.union (get_ids c1) (get_ids c2))
-    | K.WHILE (be, c1) -> IDS.union (get_ids_be be ) (get_ids c1)
+    | K.IF (e, c1, c2) -> IDS.union (get_ids_e e) (IDS.union (get_ids c1) (get_ids c2))
+    | K.WHILE (e, c1) -> IDS.union (get_ids_e e ) (get_ids c1)
     | K.END -> IDS.empty
 
 let rec seq a b =
