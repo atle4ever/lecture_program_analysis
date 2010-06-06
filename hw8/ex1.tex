@@ -7,10 +7,10 @@ $\Gamma \vdash e : \tau$의 증명에 대한 귀납법으로 진행한다. \\
 \textbf{Case 1.} $e = n$인 경우: $n$이 값이므로 더 이상 진행하지 않음. \\
 \textbf{Case 2.} $e = x$인 경우: $x$이 값이므로 더 이상 진행하지 않음. \\
 \textbf{Case 3.} $e = \lambda x. e_1 $인 경우: $\lambda x. e_1$이 값이므로 더 이상 진행하지 않음. \\
-\textbf{Case 4.} $e = e_1 \texttt{+} e_2$인 경우: $\Gamma \vdash e_1 \texttt{+} e_2 : \iota$이므로 타입추론 규칙에 의해 $\Gamma \vdash e_1 : \iota$, $\Gamma \vdash e_2 : \iota$이다. 따라서, 귀납 가정에 의해서,
+\textbf{Case 4.} $e = e_1 \texttt{+} e_2$인 경우: $\Gamma \vdash e_1 \texttt{+} e_2 : \iota$이므로 타입추론 규칙에 의해 $\Gamma \vdash e_1 : \iota$, $\Gamma \vdash e_2 : \iota$이다. 따라서 귀납 가정에 의해서,
 \begin{itemize}
-\item $e_1$이 값이 아니면 진행 $e_1 \to e_1'$하고, 이는 곧 프로그램 실행 $\to$의 정의에 의해 $e_1 \texttt{+} e_2 \to e_1' \texttt{+} e_2$과 같다.
-\item $e_1$이 값이고 $e_2$의 값이 아니면 진행 $e_2 \to e_2'$하고, 이는 곧 프로그램 실행 $\to$의 정의에 의해 $e_1 \texttt{+} e_2 \to e_1 \texttt{+} e_2'$과 같다.
+\item $e_1$이 값이 아니면 진행 $e_1 \to e_1'$하고, 이는 곧 프로그램 실행 $\to$의 정의에 의해 $e_1 \texttt{+} e_2 \to e_1' \texttt{+} e_2$와 같다.
+\item $e_1$이 값이고 $e_2$가 값이 아니면 진행 $e_2 \to e_2'$하고, 이는 곧 프로그램 실행 $\to$의 정의에 의해 $e_1 \texttt{+} e_2 \to e_1 \texttt{+} e_2'$와 같다.
 \item $e_1$, $e_2$가 모두 값이라면 $\Gamma \vdash e_1 : \iota$, $\Gamma \vdash e_2 : \iota$일 수 있는 값 $e_1$, $e_2$는 오직 $n_1$, $n_2$일 경우 뿐이다. 따라서 프로그램 실행 $\to$의 정의에 의해 반드시 진행 $e_1 \texttt{+} e_2 = n_1 \texttt{+} n_2 \to (n_1 + n_2)$ 한다.
 \end{itemize}
 \textbf{Case 5.} $e = e_1 e_2$인 경우는 `slide 16.pdf'에 나와있다.
@@ -24,7 +24,7 @@ Case 1, Case 2, Case 3은 더 이상 진행하지 않는다.\\
 \begin{itemize}
 \item $e_1 \to e_1'$ 이라서 $e_1 \texttt{+} e_2 \to e_1' \texttt{+} e_2$ 인 경우, 귀납 가정에 의해 $\Gamma \vdash e_1' : \iota$, $\Gamma \vdash e_2 : \iota$ 이므로 타입추론 규칙에 의해 $\Gamma \vdash e_1' \texttt{+} e_2 : \iota$.
 \item $e_1$은 값이고 $e_2 \to e_2'$ 이라서 $e_1 \texttt{+} e_2 \to e_1 \texttt{+} e_2'$ 인 경우, 귀납 가정에 의해 $\Gamma \vdash e_1 : \iota$, $\Gamma \vdash e_2' : \iota$ 이므로 타입추론 규칙에 의해 $\Gamma \vdash e_1 \texttt{+} e_2' : \iota$.
-\item $e_1$, $e_2$가 모두 값인 경우,  진행 $e_1 \texttt{+} e_2 \to (n_1 + n_2)$ 하므로 $\Gamma \vdash (n_1 + n_2) : \iota$
+\item $e_1$, $e_2$가 모두 값인 경우,  진행 $e_1 \texttt{+} e_2 \to (n_1 + n_2)$ 하고 $\Gamma \vdash (n_1 + n_2) : \iota$
 \end{itemize}
 \textbf{Case 5.} $e = e_1 e_2$인 경우는 `slide 16.pdf'에 나와있다.
 

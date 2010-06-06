@@ -1,1 +1,17 @@
 \section*{Ex3. 타입기반 분석 증명 II}
+\subsection*{Definition of $\sigma \vdash e \Rightarrow \texttt{error}$}
+\begin{align*}
+    \frac{\sigma \vdash e_1 \Rightarrow n, f1} {\sigma \vdash e_1 e_2 \Rightarrow \texttt{error}} & \quad &
+    \frac{\sigma \vdash e_1 \Rightarrow \texttt{error}} {\sigma \vdash e_1 e_2 \Rightarrow \texttt{error}} \\
+    \frac{\sigma \vdash e_2 \Rightarrow \texttt{error}} {\sigma \vdash e_1 e_2 \Rightarrow \texttt{error}} & \quad &
+    \frac{x \not \in \texttt{Dom} \, \sigma} {\sigma \vdash x \Rightarrow \texttt{error}}
+\end{align*}
+
+\subsection*{Proof of Subject reduction}
+\textbf{Subject Reduction:} $(\Gamma \vdash e : \tau, c) \land (\sigma \models \Gamma) \land (\sigma \vdash e \Rightarrow v, f)$ 이면 $(v : \tau) \land (f \subseteq c)$ \\
+\\
+$\sigma \vdash e \Rightarrow v, f$의 증명에 대한 귀납법으로 진행한다.\\
+\textbf{Case 1.} $e = n$인 경우: $\Gamma \vdash n : \iota, \emptyset, \quad \sigma \vdash n \Rightarrow n, \emptyset$ 이므로 $n : \iota$이고 $\emptyset \subseteq \emptyset$이다. \\
+\textbf{Case 2.} $e = x$인 경우: $\Gamma \vdash x : \Gamma(x), \emptyset, \quad \sigma \vdash x \Rightarrow \sigma(x), \emptyset$이고 $\sigma \models \Gamma$이므로 $\sigma(x) : \Gamma(x), \quad \emptyset \subseteq \emptyset$이다. \\
+\textbf{Case 3.} $e = \lambda_l x. e_1$인 경우: $\Gamma \vdash \lambda_l x.e_1 : \tau_1 \stackrel{c \cup \{l\}}{\to} \tau_2, \emptyset, \quad \sigma \vdash \lambda_l x.e_1 \Rightarrow <\lambda_l x.e_1, \sigma>, \emptyset$이고 $\emptyset \subseteq \emptyset$ 이므로 $<\lambda_l x.e_1, \sigma> : \tau_1 \stackrel{c \cup \{l\}}{\to} \tau_2$임을 보이면 된다. $\Gamma \vdash \lambda_l x.e_1 : \tau_1 \stackrel{c \cup \{l\}}{\to} \tau_2, \emptyset$이므로 추론 규칙에 의해 $\Gamma + x : \tau_1 \vdash e_1 : \tau_2, c$이다. $\Gamma' = \Gamma + x : \tau_1$, $\sigma' = \sigma\{x \to v'\} (v'는 v' : \tau_1인 임의의 값)$라 하면 $\sigma' \models \Gamma'$이고 귀납 가정에 의해 $\sigma' \vdash e_1 \Rightarrow v, f, \quad v : \tau_2 \quad f \in c$이다. 따라서 $v : \tau$의 정의에 따라 $<\lambda_l x.e_1, \sigma> : \tau_1 \stackrel{c \cup \{l\}}{\to} \tau_2$이다. \\
+\textbf{Case 4.} $e = e_1 e_2$인 경우: 가정에 따라 $\Gamma \vdash e_1 e_2 : \tau', c, \quad \sigma \vdash e_1 e_2 \Rightarrow v', f$이다. $\Gamma \vdash e_1 e_2 : \tau',c$이므로 추론 규칙 의해 $\Gamma \vdash e_1 : \tau \stackrel{c_3}{\to} \tau', c_1, \quad \Gamma \vdash e_2 : \tau, c_2, \quad c = c_1 \cup c_2 \cup c_3$이고, $\sigma \vdash e_1 e_2 \Rightarrow v', f$이므로 실행 의미에 의해 $\sigma \vdash e_1 \Rightarrow <\lambda_l x.e', \sigma'>, f_1, \quad \sigma \vdash e_2 \Rightarrow v, f_2, \quad \sigma'\{x \mapsto v\} \vdash e' \Rightarrow v', f_3, \quad f = f_1 \cup f_2 \cup f_3 \cup \{l\}$ 이다. $\Gamma \vdash e_1 : \tau \stackrel{c_3}{\to} \tau', c_1, \quad \sigma \vdash e_1 \Rightarrow <\lambda_l x.e', \sigma'>, f_1$이므로 귀납 가정에 의해 $<\lambda_l x.e', \sigma'> : \tau \stackrel{c_3}{\to} \tau', \quad f_1 \subseteq c_1, \quad v : \tau, \quad f_2 \subseteq c_2$이다. $<\lambda_l x.e', \sigma'> : \tau \stackrel{c_3}{\to} \tau'$이므로 $:$의 의미에 따라 $v' : \tau'$이고 $f_3 \subseteq c_3$이다. $v' : \tau'$이고, $l \in c_3$이므로 $f_1 \cup f_2 \cup f_3 \cup \{l\} \subseteq c_1 \cup c_2 \cup c_3$.

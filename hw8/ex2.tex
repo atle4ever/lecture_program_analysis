@@ -18,7 +18,7 @@ n \texttt{+} n' \stackrel{\emptyset}{\to} (n + n') \hspace{10mm} (\lambda_l x. e
 \\
 프로그램의 실행 규칙은 $\frac{e \stackrel{f}{\to} e'}{K[e] \stackrel{f}{\to} K[e']}$ \\
 \\
-좁은 보폭으로 실행의미를 정의하면 $\Gamma \vdash e : \tau, c$ 이고 $e \stackrel{c_1}{\to} e'$ 이면, $\Gamma \vdash e': \tau, c_2$ 이고 $c_1 \cup c_2 \subseteq c$ \\
+좁은 보폭으로 실행의미를 정의하면 $\Gamma \vdash e : \tau, c$ 이고 $e \stackrel{c_1}{\to} e'$ 이면, $\Gamma \vdash e': \tau, c_2$ 이고 $c_1 \cup c_2 = c$ \\
 \\
 이 분석에서 사용할 추론 규칙은 다음과 같다.
 \begin{align*}
@@ -36,13 +36,13 @@ $\Gamma \vdash e : \tau, c$의 증명에 대한 귀납법으로 진행한다. \\
 \textbf{Case 1.} $e = n$인 경우: $n$이 값이므로 더 이상 진행하지 않음. \\
 \textbf{Case 2.} $e = x$인 경우: $x$이 값이므로 더 이상 진행하지 않음. \\
 \textbf{Case 3.} $e = \lambda x. e_1 $인 경우: $\lambda x. e_1$이 값이므로 더 이상 진행하지 않음. \\
-\textbf{Case 4.} $e = e_1 \texttt{+} e_2$인 경우: $\Gamma \vdash e_1 \texttt{+} e_2 : \iota, c$이므로 추론 규칙에 의해 $\Gamma \vdash e_1 : \iota, c_1$, $\Gamma \vdash e_2 : \iota, c_2$, $c = c_1 \cup c_2$이다. 따라서, 귀납 가정에 의해서,
+\textbf{Case 4.} $e = e_1 \texttt{+} e_2$인 경우: $\Gamma \vdash e_1 \texttt{+} e_2 : \iota, c$이므로 추론 규칙에 의해 $\Gamma \vdash e_1 : \iota, c_1, \quad \Gamma \vdash e_2 : \iota, c_2, \quad c = c_1 \cup c_2$이다. 따라서 귀납 가정에 의해서,
 \begin{itemize}
-\item $e_1$이 값이 아니면 진행 $e_1 \stackrel{f}{\to} e_1'$하고, 이는 곧 프로그램 실행 $\to$의 정의에 의해 $e_1 \texttt{+} e_2 \stackrel{f}{\to} e_1' \texttt{+} e_2$과 같다.
-\item $e_1$이 값이고 $e_2$가 값이 아니면 진행 $e_2 \stackrel{f}{\to} e_2'$하고, 이는 곧 프로그램 실행 $\to$의 정의에 의해 $e_1 \texttt{+} e_2 \stackrel{f}{\to} e_1 \texttt{+} e_2'$과 같다.
-\item $e_1$, $e_2$가 모두 값이라면 $\Gamma \vdash e_1 : \iota, c_1$, $\Gamma \vdash e_2 : \iota, c_2$일 수 있는 값 $e_1$, $e_2$는 오직 $n_1$, $n_2$일 경우 뿐이고 $c_1 = c_2 = \emptyset$이다. 따라서 프로그램 실행 $\to$의 정의에 의해 반드시 진행 $e_1 \texttt{+} e_2 = n_1 \texttt{+} n_2 \stackrel{\{ \}}{\to} (n_1 + n_2)$ 한다.
+\item $e_1$이 값이 아니면 진행 $e_1 \stackrel{f}{\to} e_1'$하고, 이는 곧 프로그램 실행 $\to$의 정의에 의해 $e_1 \texttt{+} e_2 \stackrel{f}{\to} e_1' \texttt{+} e_2$와 같다.
+\item $e_1$이 값이고 $e_2$가 값이 아니면 진행 $e_2 \stackrel{f}{\to} e_2'$하고, 이는 곧 프로그램 실행 $\to$의 정의에 의해 $e_1 \texttt{+} e_2 \stackrel{f}{\to} e_1 \texttt{+} e_2'$와 같다.
+\item $e_1$, $e_2$가 모두 값이라면 $\Gamma \vdash e_1 : \iota, c_1$, $\Gamma \vdash e_2 : \iota, c_2$일 수 있는 값 $e_1$, $e_2$는 오직 $n_1$, $n_2$일 경우 뿐이다. 따라서 프로그램 실행 $\to$의 정의에 의해 반드시 진행 $e_1 \texttt{+} e_2 = n_1 \texttt{+} n_2 \stackrel{\{ \}}{\to} (n_1 + n_2)$ 한다.
 \end{itemize}
-\textbf{Case 5.} $e = e_1 e_2$인 경우: $\Gamma \vdash e_1 e_2 : \tau, c$ 이므로 추론 규칙에 의해 $\Gamma \vdash e_1 : \tau' \stackrel{c_3}{\to} \tau, c_1$, $\Gamma \vdash e_2 : \tau', c_2$, $c = c = c_1 \cup c_2 \cup c_3$ 이다. 따라서 귀납 가정에 의해서,
+\textbf{Case 5.} $e = e_1 e_2$인 경우: $\Gamma \vdash e_1 e_2 : \tau, c$ 이므로 추론 규칙에 의해 $\Gamma \vdash e_1 : \tau' \stackrel{c_3}{\to} \tau, c_1,\quad \Gamma \vdash e_2 : \tau', c_2, \quad c = c_1 \cup c_2 \cup c_3$ 이다. 따라서 귀납 가정에 의해서,
 \begin{itemize}
 \item $e_1$이 값이 아니면 진행 $e_1 \stackrel{f}{\to} e_1'$하고, 이는 곧 프로그램 실행 $\to$의 정의에 의해 $e_1 e_2 \stackrel{f}{\to} e_1' e_2$과 같다.
 \item $e_1$이 값이고 $e_2$가 값이 아니면 진행 $e_2 \stackrel{f}{\to} e_2'$하고, 이는 곧 프로그램 실행 $\to$의 정의에 의해 $e_1 e_2 \stackrel{f}{\to} e_1 e_2'$과 같다.
@@ -54,17 +54,17 @@ $\Gamma \vdash e : \tau, c$의 증명에 대한 귀납법으로 진행한다. \\
 \\
 $\Gamma \vdash e : \tau, c$의 증명에 대한 귀납법으로 진행한다.\\
 Case 1, Case 2, Case 3은 더 이상 진행하지 않는다.\\
-\textbf{Case 4.} $e = e_1 \texttt{+} e_2$인 경우: $\Gamma \vdash e_1 \texttt{+} e_2 : \iota, c$이므로 추론 규칙에 의해 $\Gamma \vdash e_1 : \iota, c_1$, $\Gamma \vdash e_2 : \iota, c_2$, $c = c_1 \cup c_2$이다. $e_1 \texttt{+} e_2 \stackrel{f}{\to} e'$ 이라면 세가지 경우 밖에 없다.
+\textbf{Case 4.} $e = e_1 \texttt{+} e_2$인 경우: $\Gamma \vdash e_1 \texttt{+} e_2 : \iota, c$이므로 추론 규칙에 의해 $\Gamma \vdash e_1 : \iota, c_1, \quad \Gamma \vdash e_2 : \iota, c_2, \quad c = c_1 \cup c_2$이다. $e_1 \texttt{+} e_2 \stackrel{f}{\to} e'$ 이라면 세가지 경우 밖에 없다.
 \begin{itemize}
-\item $e_1 \stackrel{f}{\to} e_1'$ 이라서 $e_1 \texttt{+} e_2 \stackrel{f}{\to} {e'}_1 \texttt{+} e_2$ 인 경우, 귀납 가정에 의해 $\Gamma \vdash {e'}_1 : \iota, {c'}_1$이고 ${c'}_1 \cup f = c_1$이다. 따라서 추론 규칙에 의해 $\Gamma \vdash {e'}_1 \texttt{+} e_2 : \iota, {c'}_1 \cup c_2$이고 $({c'}_1 \cup c_2) \cup f = c$이다.
-\item $e_1$은 값이고 $e_2 \stackrel{f}{\to} {e'}_2$ 이라서 $e_1 \texttt{+} e_2 \stackrel{f}{\to} e_1 \texttt{+} {e'}_2$ 인 경우, 귀납 가정에 의해 $\Gamma \vdash {e'}_2 : \iota, {c'}_2$이고 ${c'}_2 \cup f = c_2$이다. 따라서 추론 규칙에 의해 $\Gamma \vdash e_1 \texttt{+} {e'}_2 : \iota, c_1 \cup {c'}_2$이고 $(c_1 \cup {c'}_2) \cup f = c$이다.
-\item $e_1$, $e_2$가 모두 값인 경우, $c_1 = c_2 = c = \emptyset$이고 진행 $e_1 \texttt{+} e_2 \stackrel{\{ \}}{\to} (n_1 + n_2)$ 하므로 $\Gamma \vdash (n_1 + n_2) : \iota, \emptyset$
+\item $e_1 \stackrel{f}{\to} e_1'$ 이라서 $e_1 \texttt{+} e_2 \stackrel{f}{\to} {e'}_1 \texttt{+} e_2$ 인 경우, 귀납 가정에 의해 $\Gamma \vdash {e'}_1 : \iota, {c'}_1$이고 $f \cup {c'}_1 = c_1$이다. 따라서 추론 규칙에 의해 $\Gamma \vdash {e'}_1 \texttt{+} e_2 : \iota, {c'}_1 \cup c_2$이고 $f \cup ({c'}_1 \cup c_2) = c$이다.
+\item $e_1$은 값이고 $e_2 \stackrel{f}{\to} {e'}_2$ 이라서 $e_1 \texttt{+} e_2 \stackrel{f}{\to} e_1 \texttt{+} {e'}_2$ 인 경우, 귀납 가정에 의해 $\Gamma \vdash {e'}_2 : \iota, {c'}_2$이고 $f \cup {c'}_2 = c_2$이다. 따라서 추론 규칙에 의해 $\Gamma \vdash e_1 \texttt{+} {e'}_2 : \iota, c_1 \cup {c'}_2$이고 $f \cup (c_1 \cup {c'}_2) = c$이다.
+\item $e_1$, $e_2$가 모두 값인 경우, $e_1 = n_1, e_2 = n_2$이고 $c_1 = c_2 = c = \emptyset$이다. 진행 $e_1 \texttt{+} e_2 \stackrel{\{ \}}{\to} (n_1 + n_2)$ 하므로 $\Gamma \vdash (n_1 + n_2) : \iota, \emptyset$
 \end{itemize}
-\textbf{Case 5.} $e = e_1 e_2$인 경우: $\Gamma \vdash e_1 e_2 : \tau, c$ 이므로 추론 규칙에 의해 $\Gamma \vdash e_1 : \tau' \stackrel{c_3}{\to} \tau, c_1$, $\Gamma \vdash e_2 : \tau', c_2$, $c = c_1 \cup c_2 \cup c_3$이다. $e_1 e_2 \stackrel{f}{\to} e'$ 이라면 세가지 경우 밖에 없다.
+\textbf{Case 5.} $e = e_1 e_2$인 경우: $\Gamma \vdash e_1 e_2 : \tau, c$ 이므로 추론 규칙에 의해 $\Gamma \vdash e_1 : \tau' \stackrel{c_3}{\to} \tau, c_1, \quad \Gamma \vdash e_2 : \tau', c_2, \quad c = c_1 \cup c_2 \cup c_3$이다. $e_1 e_2 \stackrel{f}{\to} e'$ 이라면 세가지 경우 밖에 없다.
 \begin{itemize}
-\item $e_1 \stackrel{f}{\to} {e'}_1$이라서 $e_1 e_2 \stackrel{f}{\to} {e'}_1 e_2$인 경우. 귀납 가정에 의해 $\Gamma \vdash {e'}_1 : \tau' \stackrel{c_3}{\to} \tau, {c'}_1$, $f \cup {c'}_1 = c_1$. 따라서 추론 규칙에 의해 $\Gamma \vdash {e'}_1 e_2 : \tau, {c'}_1 \cup c_2 \cup c_3$, $({c'}_1 \cup c_2 \cup c_3) \cup f = c$.
-\item $e_1$이 값이고 $e_2 \stackrel{f}{\to} {e'}_2$이라서 $e_1 e_2 \stackrel{f}{\to} e_1 {e'}_2$인 경우. 귀납 가정에 의해 $\Gamma \vdash {e'}_2 : \tau', {c'}_2$, $f \cup {c'}_2 = c_2$. 따라서 추론 규칙에 의해 $\Gamma \vdash e_1 {e'}_2 : \tau, c_1 \cup {c'}_2 \cup c_3$, $(c_1 \cup {c'}_2 \cup c_3) \cup f = c$.
-\item $e_1$, $e_2$가 모두 값인 경우. $\Gamma \vdash e_1 : \tau' \stackrel{c_3}{\to} \tau, c_1$ 인 값 $e_1$은 추론 규칙에 의해 $\lambda_l x. e'$ 밖에는 없다. 즉, $e_1 e_2 = (\lambda_l x. e')v$, $c_1 = c_2 = \emptyset$, $c = c_3$이고, $(\lambda_l x. e')v \stackrel{l}{\to} \{v/x\}e'$ 이다. $\Gamma \vdash \lambda x. e' : \tau' \stackrel{c_3}{\to} \tau, c_1$이라면 추론 규칙에 의해 $\Gamma + x : \tau' \vdash e' : \tau, {c'}_3$, ${c'}_3 \cup l = c_3$ 이다. $\Gamma \vdash v : \tau'$이므로, ``Preservation under Substitution Lemma''에 의해 $\Gamma \vdash \{v/x\} e' : \tau, {c'}_3$ 이다.
+\item $e_1 \stackrel{f}{\to} {e'}_1$이라서 $e_1 e_2 \stackrel{f}{\to} {e'}_1 e_2$인 경우. 귀납 가정에 의해 $\Gamma \vdash {e'}_1 : \tau' \stackrel{c_3}{\to} \tau, {c'}_1, \quad f \cup {c'}_1 = c_1$. 따라서 추론 규칙에 의해 $\Gamma \vdash {e'}_1 e_2 : \tau, {c'}_1 \cup c_2 \cup c_3, \quad f \cup ({c'}_1 \cup c_2 \cup c_3) = c$.
+\item $e_1$이 값이고 $e_2 \stackrel{f}{\to} {e'}_2$이라서 $e_1 e_2 \stackrel{f}{\to} e_1 {e'}_2$인 경우. 귀납 가정에 의해 $\Gamma \vdash {e'}_2 : \tau', {c'}_2, \quad f \cup {c'}_2 = c_2$. 따라서 추론 규칙에 의해 $\Gamma \vdash e_1 {e'}_2 : \tau, c_1 \cup {c'}_2 \cup c_3, \quad (c_1 \cup {c'}_2 \cup c_3) \cup f = c$.
+\item $e_1$, $e_2$가 모두 값인 경우. $\Gamma \vdash e_1 : \tau' \stackrel{c_3}{\to} \tau, c_1$ 인 값 $e_1$은 추론 규칙에 의해 $\lambda_l x. e'$ 밖에는 없다. 즉, $e_1 e_2 = (\lambda_l x. e')v$, $c_1 = c_2 = \emptyset$, $c = c_3$이고, 진행 $(\lambda_l x. e')v \stackrel{l}{\to} \{v/x\}e'$ 한다. $\Gamma \vdash \lambda x. e' : \tau' \stackrel{c_3}{\to} \tau, c_1$이라면 추론 규칙에 의해 $\Gamma + x : \tau' \vdash e' : \tau, {c'}_3, \quad {c'}_3 \cup \{l\} = c_3$ 이다. $\Gamma \vdash v : \tau', \emptyset$이므로, ``Preservation under Substitution Lemma''에 의해 $\Gamma \vdash \{v/x\} e' : \tau, {c'}_3$ 이고 $\{l\} \cup {c'}_3 = c$.
 \end{itemize}
 
 \subsection*{Proof of Preservation under Substitution lemma}
@@ -74,7 +74,7 @@ $\Gamma + x : \tau' \vdash e : \tau$의 증명에 대한 귀납법으로 진행한다.\\
 \textbf{Case 1.} $e = n$인 경우 $\{v/x\}n = n$이다. \\
 \textbf{Case 2-1.} $e = y (y \neq x)$인 경우 $\{v/x\}y = y$이다. \\
 \textbf{Case 2-2.} $e = x$인 경우 $\{v/x\}x = v$이다. $\Gamma + x : \tau' \vdash x : \tau', \emptyset$이고 $\Gamma \vdash v : \tau', \emptyset$이다. \\
-\textbf{Case 3.} $e = \lambda_l y. e'$인 경우 $\{v/x\} \lambda_l y. e' = \lambda_l y. \{v/x\} e'$이다. 따라서 보일 것은 $\Gamma \vdash \lambda_l y.\{v/x\} e' : \tau \stackrel{\textrm{let}}{=} \tau_1 \stackrel{c_3}{\to} \tau_2$. 가정 $\Gamma + e : \tau' \vdash \lambda_l y. e' : \tau_1 \stackrel{c_3}{\to} \tau_2$으로부터 추론 규칙에 의해 $\Gamma + x : \tau' + y : \tau_1 \vdash e' : \tau_2,{c'}_3$, ${c'}_3 \cup \{l\} = c_3$이고,  $\Gamma \vdash v : \tau', \emptyset$와 $y \nsubseteq FV(v)$으로부터 $\Gamma y : \tau_1 \vdash v : \tau', \emptyset$이므로, 귀납 가정에 의해 $\Gamma + y : \tau_1 \vdash \{v/x\} e' : \tau_2, {c'}_3$. 즉, 추론 규칙에 의해 $\Gamma \vdash \lambda_l y. \{v/x\} e' : \tau_1 \stackrel{c_3}{\to} \tau_2, \emptyset$. \\
-\textbf{Case 4.} $e = e_1 \texttt{+} e_2$인 경우 $\{x/v\}(e_1 \texttt{+} e_2) = \{x/v\} e_1 \texttt{+} \{x/v\} e_2$이다. 귀납 가정과 추론 귀칙에 의해 $\Gamma \vdash \{x/v\} e_1 \texttt{+} \{x/v\} e_2 : \iota, c$. \\
-\textbf{Case 5.} $e = e_1 e_2$인 경우 $\{x/v\}(e_1 e_2) = \{x/v\} e_1 \{x/v\} e_2$이다. 귀납 가정과 추론 귀칙에 의해 $\Gamma \vdash \{x/v\} e_1 \{x/v\} e_2 : \tau, c$.
+\textbf{Case 3.} $e = \lambda_l y. e'$인 경우 항상 $y \not \in \{x\} \cup FV v$인 $\lambda_l y.e'$로 간주할 수 있으므로 $\{v/x\} \lambda_l y. e' = \lambda_l y. \{v/x\} e'$이다. 따라서 보일 것은 $\Gamma \vdash \lambda_l y.\{v/x\} e' : \tau (\stackrel{\textrm{let}}{=} \tau_1 \stackrel{c_3}{\to} \tau_2), c$. 가정 $\Gamma + x : \tau' \vdash \lambda_l y. e' : \tau_1 \stackrel{c_3}{\to} \tau_2, c$으로부터 추론 규칙에 의해 $\Gamma + x : \tau' + y : \tau_1 \vdash e' : \tau_2,{c'}_3, \quad {c'}_3 \cup \{l\} = c_3$이고,  $\Gamma \vdash v : \tau', \emptyset$와 $y \not \in FV(v)$으로부터 $\Gamma + y : \tau_1 \vdash v : \tau', \emptyset$이므로, 귀납 가정에 의해 $\Gamma + y : \tau_1 \vdash \{v/x\} e' : \tau_2, {c'}_3$. 즉, 추론 규칙에 의해 $\Gamma \vdash \lambda_l y. \{v/x\} e' : \tau_1 \stackrel{c_3}{\to} \tau_2, \emptyset$. \\
+\textbf{Case 4.} $e = e_1 \texttt{+} e_2$인 경우 추론 규칙에 의해 $\Gamma \vdash e_1 : \iota, c_1, \quad \Gamma \vdash e_2 : \iota, c_2, \quad c = c_1 \cup c_2$이다. 그리고 $\{v/x\}(e_1 \texttt{+} e_2) = \{v/x\} e_1 \texttt{+} \{v/x\} e_2$이다. 귀납 가정에 의해 의해 $\Gamma \vdash \{v/x\} e_1 : \iota, c_1, \quad \Gamma \vdash \{v/x\} e_2 : \iota, c_2$이므로 추론 규칙에 의해 $\Gamma \vdash \{v/x\} e_1 \texttt{+} \{v/x\} e_2 : \iota, c$. \\
+\textbf{Case 5.} $e = e_1 e_2$인 경우 추론 규칙에 의해 $\Gamma \vdash e_1 : \tau' \stackrel{c_3}{\to} \tau, c_1, \quad \Gamma \vdash e_2 : \tau', c_2, \quad c = c_1 \cup c_2 \cup c_3$이다. 그리고 $\{v/x\}(e_1 e_2) = \{v/x\} e_1 \{v/x\} e_2$이다. 귀납 가정에 의해 $\Gamma \vdash \{v/x\} e_1 : \tau' \stackrel{c_3}{\to} \tau, c_1, \quad \Gamma \vdash \{v/x\} e_2 : \tau', c_2$이므로 추론 규칙에 의해 $\Gamma \vdash \{v/x\} e_1 \{v/x\} e_2 : \tau, c$.
 
