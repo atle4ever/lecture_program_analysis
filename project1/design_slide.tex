@@ -1,0 +1,200 @@
+% !TEX encoding = MacKorean
+\documentclass{beamer}
+\mode<presentation>{\usetheme{boxes}}
+
+\usepackage{hangul}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathrsfs}
+
+\title{Project1 Design}
+\author{Kim, Seongjun}
+\date{2009-20769}                                           % Activate to display a given date or no date
+
+\AtBeginSection[]{}
+\begin{document}
+\maketitle
+
+\begin{frame}
+	\frametitle{Definition of Domains}
+	\begin{align*}
+		\hat{s} \in \hat{State} 					= & \quad (c \times \hat{Memory}) \\
+		\hat{sm} \in \hat{StateMap}				= & \quad c \stackrel{\textrm{fin}}{\to} \hat{Memory} \\
+		\hat{m} \in \hat{Memory} 	= & \quad Loc \stackrel{\textrm{fin}}{\to} \hat{Val} \\
+		\hat{v} \in \hat{Val} 					= & \quad \bot_{\hat{Val}}, \top_{\hat{Val}} + \hat{\mathbb{Z}} + \hat{\mathbb{B}} + \hat{Loc} \\
+		\hat{n} \in \hat{\mathbb{Z}} 			= & \quad (\hat{Parity} \times \hat{Interval}) \\
+		\hat{p} \in \hat{Parity} 	= & \quad \{ \bot_{\hat{P}}, \top_{\hat{P}}, odd, even \} \\
+		\hat{i} \in \hat{Interval} 	= & \quad \{ \bot_{\hat{I}} \} \cup \{(a, b) \, | \, a \le b, \, a, b \in \mathbb{Z} \cup \{\infty, -\infty  \} \} \\
+		\hat{b} \in \hat{\mathbb{B}} 			= & \quad \{\bot_{\hat{\mathbb{B}}}, \top_{\hat{\mathbb{B}}}, \hat{T}, \hat{F}\} \\
+		\hat{l} \in \hat{Loc} 					= & \quad 2^{Loc} \\
+	\end{align*}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Definition of Domains}
+	\begin{align*}
+		c \in c = & \quad (Label \times Stmt) \\
+		Stmt \to & \quad \texttt{skip} \\
+		       | & \quad x \texttt{:=} E \\
+		       | & \quad \texttt{*}x \texttt{:=} E \\
+		       | & \quad c ; c \\
+		       | & \quad \texttt{if} \, E \, c \, c \\
+		       | & \quad \texttt{while} \, E \, c
+	\end{align*}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Definition of $\hat{Next}$ }
+	\begin{align*}
+		\hat{Next} : & \hat{StateMap} \to \hat{StateMap} \\
+				   = & \lambda sm. \{ \bigsqcup (\hat{next} \, c \, \hat{m}) | \{c \mapsto \hat{m}\} \in sm \}
+	\end{align*}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Difinition of $\hat{next}$ }
+	\begin{align*}
+		\hat{next} : & \quad c \to \hat{Memory} \to \hat{StateMap} \\
+		\hat{next} \, (L, \texttt{skip})							\, \hat{m} = & \quad \{ n \, L \mapsto \hat{m} \} \\
+		\hat{next} \, (L, x \, \texttt{:=} \, E)					\, \hat{m} = & \quad \{ n \, L \mapsto \hat{m}\{x \mapsto \hat{v} \} \} 
+																					\quad (\hat{v} = \hat{\mathcal{V}} \, E \, \hat{m}) \\
+		\hat{next} \, (L, \texttt{*}x \, \texttt{:=} \, E)			\, \hat{m} = & \quad \{ n \, L \mapsto \hat{m}\{\hat{l} \mapsto \hat{v} \} \} \\
+																				 &\quad (\hat{l} = \hat{m}(x), \hat{v} = \hat{\mathcal{V}} \, E \, \hat{m})\\
+		\hat{next} \, (L, {c}_1 \, ; \, {c}_2)	\, \hat{m} = & \quad \{ {c}_1 \mapsto \hat{m} \} \\
+	\end{align*}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Difinition of $\hat{next}$ }
+	\begin{align*}
+		\hat{next} \, (L, \texttt{if} \, E \, {c}_1 \, {c}_2)	\, \hat{m} = & \quad if \hat{b} = \hat{T} then \, \{ {c}_1 \mapsto \hat{m} \}, \\
+																			& \quad	if \hat{b} = \hat{F} then \, \{ {c}_2 \mapsto \hat{m} \}, \\
+																			& \quad if \hat{b} = \top then \, \{ {c}_1 \mapsto \hat{m_T}, {c}_2 \mapsto \hat{m_F} \} \\
+																				  & \quad (\hat{b} = \hat{\mathcal{V}} \, E \, \hat{m})\\
+		\hat{next} \, (L, \texttt{while} \, E \, c) 				\, \hat{m} = & \quad if \hat{b} = \hat{T} then \, \{ c \mapsto \hat{m} \}, \\
+																				  & \quad if \hat{b} = \hat{F} then \, \{ n \, L \mapsto \hat{m} \}, \\
+																				  & \quad if \hat{b} = \top then \, \{ c \mapsto \hat{m_T}, n \, L \mapsto \hat{m_F}\} \\
+																				  & \quad (\hat{b} = \hat{\mathcal{V}} \, E \, \hat{m})
+	\end{align*}
+\end{frame}		
+	
+%		
+%
+%	\subsection*{3. Definition of $\hat{Next}$ }
+%		\begin{align*}
+%			\hat{Next} \in & \quad {2}^{\hat{State}} \to {2}^{\hat{State}} \\
+%					   = & \quad \wp(\sqcup) \circ \hat{\pi} \circ \wp_{\cup}(\hat{next})
+%		\end{align*}
+%	
+%		\subsubsection*{Definition of $\hat{next}$ }
+%			\begin{align*}
+%				\hat{next} \in & \quad \hat{State} \to 2^{\hat{State}} \\
+%				\hat{next} \, ((L, \texttt{skip})							\, \hat{m}) = & \quad \{ (n \, L, \hat{m}) \} \\
+%				\hat{next} \, ((L, x \, \texttt{:=} \, E)					\, \hat{m}) = & \quad \{ (n \, L, \hat{m}\{x \mapsto \hat{v} \} ) \} 
+%																							\quad (\hat{v} (\in \hat{Val})= \hat{\mathcal{V}} \, E \, \hat{m}) \\
+%				\hat{next} \, ((L, \texttt{*}x \, \texttt{:=} \, E)			\, \hat{m}) = & \quad \{ (n \, L, \hat{m}\{\hat{l} \mapsto \hat{v} \} ) \}
+%																							\quad (\hat{l} (\in \hat{Loc}) = \hat{m}(x), \hat{v} (\in \hat{Val}) = \hat{\mathcal{V}} \, E \, \hat{m})\\
+%				\hat{next} \, ((L, {c}_1 \, ; \, {c}_2)	\, \hat{m}) = & \quad \{ ({c}_1, \hat{m}) \} \\
+%				\hat{next} \, ((L, \texttt{if} \, E \, {c}_1 \, {c}_2)	\, \hat{m}) = & \quad \hat{b} == \hat{T} \textrm{이면 } \{ ({c}_1, \hat{m}) \}, \\
+%																						  &	\quad \hat{b} == \hat{F} \textrm{이면 } \{ ({c}_2, \hat{m}) \}, \\
+%																						  & \quad \hat{b} == \top \textrm{이면 } \{ ({c}_1, \hat{m}), ({c}_2, \hat{m}) \} \\
+%																						  & \quad (\hat{b} (\in \hat{\mathbb{B}}) = \hat{\mathcal{V}} \, E \, \hat{m})\\
+%				\hat{next} \, ((L, \texttt{while} \, E \, c) 				\, \hat{m}) = & \quad \hat{b} == \hat{T} \textrm{이면 } 	\{ (c, \hat{m}) \}, \\
+%																						  & \quad \hat{b} == \hat{F} \textrm{이면 } \{ (n \, L, \hat{m}) \}, \\
+%																						  & \quad \hat{b} == \top \textrm{이면 } \{ (c, \hat{m}), (n \, L, \hat{m})\} \\
+%																						  & \quad (\hat{b} (\in \hat{\mathbb{B}}) = \hat{\mathcal{V}} \, E \, \hat{m})
+%			\end{align*}																	
+%		
+%		\subsubsection*{Definition of $\hat{\mathcal{V}}$ }
+%			\begin{align*}
+%				\hat{\mathcal{V}} \in & \quad E \to \hat{Memory} \to \hat{Val} \\
+%				\hat{\mathcal{V}} \, n						\, \hat{m} = & \quad \alpha_{\mathbb{Z}} (\{n\}) \\
+%				\hat{\mathcal{V}} \, \texttt{true}			\, \hat{m} = & \quad \hat{T} \\
+%				\hat{\mathcal{V}} \, \texttt{false}		\, \hat{m} = & \quad \hat{F} \\
+%				\hat{\mathcal{V}} \, x 					\, \hat{m} = & \quad \hat{m}(x) \\
+%				\hat{\mathcal{V}} \, \texttt{*}x 			\, \hat{m} = & \quad \hat{m}(\hat{l}) \quad (\hat{l} (\in \hat{Loc}) = \hat{m}(x)) \\
+%				\hat{\mathcal{V}} \, \texttt{\&}x 			\, \hat{m} = & \quad \{x\} \\
+%				\hat{\mathcal{V}} \, E_1 \texttt{+} E_2 	\, \hat{m} = & \quad \hat{n_1} + \hat{n_2} 
+%																\quad (\hat{n_1}, \hat{n_2} \in \hat{\mathbb{Z}}
+%																, \hat{n_1} = \hat{\mathcal{V}} \, E_1 \, \hat{m}
+%																, \hat{n_2} = \hat{\mathcal{V}} \, E_2 \, \hat{m}) \\
+%				\hat{\mathcal{V}} \, \texttt{-} E 			\, \hat{m} = & \quad -\hat{n} \quad (\hat{n} (\in \hat{\mathbb{Z}}) = \hat{\mathcal{V}} \, E \, \hat{m}) \\
+%				\hat{\mathcal{V}} \, E_1 \texttt{<} E_2		\, \hat{m} = & \quad \hat{n_1} \hat{<} \hat{n_2} 
+%																\quad (\hat{n_1}, \hat{n_2} \in \hat{\mathbb{Z}}
+%																, \hat{n_1} = \hat{\mathcal{V}} \, E_1 \, M
+%																, \hat{n_2} = \hat{\mathcal{V}} \, E_2 \, M) \\
+%				\hat{\mathcal{V}} \, \texttt{read} 		\, \hat{m} = & \quad (\top, (-\infty, \infty)) \\
+%		\end{align*}
+%
+%		\subsubsection*{Definition of $\hat{+}$}
+%			\begin{align*}
+%				(\hat{p_1}, \hat{i_1}) \hat{+} (\hat{p_2}, \hat{i_2}) = & \quad (\hat{p_1} \,\, \hat{+_p} \,\, \hat{p_2}, \hat{i_1} \,\, \hat{+_i} \,\, \hat{i_2})
+%				% \hat{+_p}
+%				\top \,\, \hat{+_p} \,\, \hat{p} = & \quad \top \\
+%				\hat{p} \,\, \hat{+_p} \,\, \top = & \quad \top \\
+%				\bot \,\, \hat{+_p} \,\, \hat{p} = & \quad \hat{p} \\
+%				\hat{p} \,\, \hat{+_p} \,\, \bot = & \quad \hat{p} \\
+%				\hat{p_1} \,\, \hat{+_p} \,\, \hat{p_2} = & \quad \hat{p_1} == \hat{p_2} ? even : odd \\\\
+%				% \hat{+_i}
+%				\top \,\, \hat{+_i} \,\, \hat{i} = & \quad \top \\
+%				\hat{i} \,\, \hat{+_i} \,\, \top = & \quad \top \\
+%				\bot \,\, \hat{+_i} \,\, \hat{i} = & \quad \hat{i} \\
+%				\hat{i} \,\, \hat{+_i} \,\, \bot = & \quad \hat{i} \\
+%				({low}_1, {high}_1) \,\, \hat{+_i} \,\, ({low}_2, {high}_2) = & \quad (\hat{min}({low}_1, {low}_2), \hat{max}({high}_1, {high}_2)) \\\\
+%				% \hat{min}, \hat{max}
+%				\hat{min} (a, b) = & \quad a, b \textrm{중 작은 값} \\
+%				\hat{max} (a, b) = & \quad a, b \textrm{중 큰 값} \\
+%				& \quad (\forall a \in \mathbb{Z} \cup \{-\infty\}.a < \infty, \forall a \in \mathbb{Z} \cup \{\infty\}.-\infty < a)
+%			\end{align*}
+%		
+%		\subsubsection*{Definition of $\hat{-}$}
+%			\begin{align*}
+%				\hat{-} (\hat{p}, \hat{i}) = & \quad (\hat{p}, \hat{-_i} \hat{i}) \\\\
+%				% \hat{-_i)
+%				\hat{-_i} \bot = & \quad \bot \\
+%				\hat{-_i} \top = & \quad \top \\
+%				\hat{-_i} (low, high) = & \quad (-high, -low)
+%			\end{align*}
+%			
+%		\subsubsection*{Definition of $\hat{<}$}
+%			\begin{align*}
+%				(p1, (low1, high1)) \hat{<} (p2, (low2, high2)) = & \quad high1 < low2 \textrm{이면 } \hat{T}) \\
+%																& \quad high2 < low1 \textrm{이면 } \hat{F}) \\
+%																& \quad \textrm{그 외의 경우 } \top
+%			\end{align*}
+%	
+%		\subsubsection*{Definition of $\hat{\pi}$}
+%			\begin{align*}
+%				\hat{\pi} \in & \quad 2^{\hat{State} \to \hat{State}} \\
+%				\hat{\pi} X = & \quad \{ \hat{\pi_l} L X | L \in Label \} \\
+%				\hat{\pi_l} L X = & \quad \{ ((L', Stmt), \hat{m}) | ((L', Stmt), \hat{m}) \in X, L == L' \}
+%			\end{align*}
+	
+%\section*{안전성 증명}
+%	\subsection*{$\hat{next}$의 안정성 증명}
+%		$\hat{next}$의 조건: \\
+%		\[ \forall s \in State: next \, s \in (\wp_\cup(\gamma) \circ \hat{next} \circ \alpha) \{ s \} \]
+%		$State$는 $((Label \times Stmt) \times Memory)$이고, $Stmt$는 귀납적으로 정의되므로 귀납 증명을 통해 위의 조건이 언제나 성립하는 것을 확인한다.\\
+%
+%		Case1: $Stmt \to \texttt{skip} $ \\
+%		이 경우 다음 지점은 언제나 동일하므로 메모리의 상태가 위의 조건에 맞는지만 확인한다. $get_m$($\hat{get_m}$)을 $State$($2^{\hat{State}}$)에서 $Memory$($2^{\hat{Memory}}$)를 얻어내는 함수라고 하자. \\
+%		$ get_m (next \, s) = M $ \\
+%		$ \hat{get_m} (\wp_\cup(\gamma) \circ \hat{next} \circ \alpha (\{ s \})) = \gamma' \circ \alpha' (\{ M \}) $ \\
+%		갈로아 연결의 성질에 따라 $ M \in \gamma' \circ \alpha' (\{ M \})$. \\
+%		
+%		Case2: $Stmt \to x \texttt{:=} E $ \\
+%		\begin{align*}
+%			get_m (next \, s) = M\{ x \mapsto v \} \\
+%			\hat{get_m} (\wp_\cup(\gamma) \circ \hat{next} \circ \alpha (\{ s \})) = & \gamma' (\hat{m} \{ x \mapsto \hat{v} \}) \quad (\hat{m} = \alpha'(\{M\}), \hat{v} = \alpha_{Val}(\{ v \})\\
+%																				 = & \{ M\{ x \mapsto v' \} | v' \in \gamma_{Val} \circ \alpha_{Val} (\{v\}) \} \\
+%		\end{align*}
+%																				   
+%				갈로아 연결의 성질에 따라 $ M \in \gamma' \circ \alpha' \{ M \}$. 따라서 위의 조건이 성립한다. \\
+%		
+%		
+%		$ next ((L, x \textrm{:=} E), M) = (n \, L, M \{ x \mapsto v\}) $ \\
+%		$ (\wp_\cup(\gamma) \circ \hat{next} \circ \alpha) \{ ((L, x \textrm{:=} E), M) \} $ \\
+%		갈로아 연결의 성질에 따라 $ \forall l \in (Loc - x). M(x) \in \gamma' (\hat{m})(x) $, $ v \in \gamma' \circ \alpha'(\{v\}) $ \\
+%	\subsection*{$\hat{\pi}$의 안정성 증명}			
+	
+\end{document}
