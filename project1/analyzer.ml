@@ -70,7 +70,7 @@ struct
   let widening : t -> t -> t =
     fun itv1 itv2 -> match itv1, itv2 with
         ELT (l1, h1), ELT (l2, h2) ->
-          ELT ((if less_bound l2 l1 then Ninfty else l1), (if less_bound l1 h2 then Pinfty else h2))
+          ELT ((if less_bound l2 l1 then Ninfty else l1), (if less_bound l1 h2 then Pinfty else h1))
       | _ -> raise (Error "Invalid widening of Interval")
 
   let narrowing : t -> t -> t =
