@@ -1,13 +1,12 @@
-module Parity =
+module Reminder =
 struct
-  type t = BOT | EVEN | ODD | TOP
+  type t = BOT | TOP | ELT of int
 
   let bot = BOT
   let top = TOP
-  let even = EVEN
-  let odd = ODD
 
-  let join prty1 prty2 =
+(*
+    let join prty1 prty2 =
     match prty1, prty2 with
         BOT, _ -> prty2
       | _, BOT -> prty1
@@ -21,13 +20,12 @@ struct
       | EVEN, EVEN -> true
       | ODD, ODD -> true
       | _, _ -> false
-    
+*)
   let string_of e =
     match e with
         BOT -> "bot"
       | TOP -> "top"
-      | EVEN -> "even"
-      | ODD -> "odd"
+      | ELT i -> "rem(" ^ (string_of_int i) ^ ")"
 end
 
 module Interval =
@@ -71,7 +69,7 @@ struct
       | _, TOP -> TOP
       | ELT (l1, h1), ELT (l2, h2) ->
           ELT (min_bound l1 l2, max_bound h1 h2)
-    
+
   let eq itv1 itv2 =
     match itv1, itv2 with
         BOT, BOT -> true
@@ -80,15 +78,15 @@ struct
           eq_bound l1 l2 && eq_bound h1 h2
       | _, _ -> false
 
-  let rec string_of e = 
-	match e with
-		BOT -> "bot"
-	  | TOP -> "[-inf, +inf]"
-	  | ELT (l, u) ->
+  let rec string_of e =
+    match e with
+        BOT -> "bot"
+      | TOP -> "[-inf, +inf]"
+      | ELT (l, u) ->
           "[" ^ string_of_bound l ^ ", " ^ string_of_bound u ^ "]"
-  and string_of_bound b = 
-	match b with 
-		Z i -> string_of_int i
-	  | Pinfty -> "+inf"
-	  | Ninfty -> "-inf"
+  and string_of_bound b =
+    match b with
+        Z i -> string_of_int i
+      | Pinfty -> "+inf"
+      | Ninfty -> "-inf"
 end

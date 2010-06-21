@@ -1,50 +1,50 @@
 (* set functors for
- * SNU 4541.664A Program Analysis 
+ * SNU 4541.664A Program Analysis
  * Kwangkeun Yi, 2010
  *)
 
 open Domain
 
 module type SET = sig
-  include Set.S 
+  include Set.S
   exception TooMany
   val all: unit -> t
 end
 
-module PrimitiveSet (A: sig 
-                       type t val compare: t -> t -> int 
+module PrimitiveSet (A: sig
+                       type t val compare: t -> t -> int
                               exception TooMany
                               val all: unit -> t list
                      end) =
 struct
   include Set.Make (A)
   exception TooMany
-  let all = fun () -> try 
+  let all = fun () -> try
     List.fold_left (fun s x -> add x s) empty (A.all())
   with A.TooMany -> raise TooMany
 end
 
-module ProductSet (A: SET) (B: SET) = 
-struct 
+module ProductSet (A: SET) (B: SET) =
+struct
   include Set.Make (struct type t = A.elt * B.elt let compare = compare end)
   exception TooMany
-  let all = fun () -> try 
-    A.fold (fun a c -> 
-              B.fold (fun b c -> add (a, b) c) 
+  let all = fun () -> try
+    A.fold (fun a c ->
+              B.fold (fun b c -> add (a, b) c)
                 (B.all()) c
            ) (A.all()) empty
   with A.TooMany -> raise TooMany
     | B.TooMany -> raise TooMany
 end
 
-module PowerSet (A: SET) = 
+module PowerSet (A: SET) =
 struct
   include Set.Make (struct type t = A.t let compare = compare end)
   exception TooMany
   let all = fun () -> raise TooMany
 end
 
-module FunctionSet (A: SET) (B: SET) = 
+module FunctionSet (A: SET) (B: SET) =
 struct
   module F = Map.Make (struct type t = A.elt let compare = compare end)
   include Set.Make (struct type t = B.elt F.t let compare = compare end)
@@ -55,11 +55,11 @@ struct
 end
 
 (* domain functors for
- * SNU 4541.664A Program Analysis 
+ * SNU 4541.664A Program Analysis
  * Kwangkeun Yi, 2010
  *)
 
-module type DOMAIN = 
+module type DOMAIN =
 sig
   type elt      (* the type of abstract domain elements *)
   val top: elt
@@ -70,24 +70,25 @@ sig
   val narrow: elt -> elt -> elt
 end
 
-module type FLAT_DOMAIN = 
+module type FLAT_DOMAIN =
 sig
   include DOMAIN
   type atom
   val make: atom -> elt
-end   
+end
 
 module type INT_FLAT_DOMAIN = FLAT_DOMAIN with type atom = int
-  
+
 module type ADDABLE_FLAT_DOMAIN =
 sig
   include INT_FLAT_DOMAIN
   val add: elt -> elt -> elt
   val minus: elt -> elt
-  val to_parity: elt -> Parity.t
+  val to_reminder: elt -> Reminder.t
+  val is_davinci: elt -> bool
 end
 
-module type PRODUCT_DOMAIN = 
+module type PRODUCT_DOMAIN =
 sig
   include DOMAIN
   type lelt
@@ -97,7 +98,7 @@ sig
   val make: lelt -> relt -> elt
 end
 
-module type POWERSET_DOMAIN = 
+module type POWERSET_DOMAIN =
 sig
   include DOMAIN
   type atom
@@ -112,7 +113,7 @@ sig
   val cardinal: elt -> int
 end
 
-module type FUNCTION_DOMAIN = 
+module type FUNCTION_DOMAIN =
 sig
   include DOMAIN
   type lelt
@@ -125,9 +126,9 @@ sig
   val duplicate: elt -> elt
 end
 
-module type INTERVAL_DOMAIN = 
+module type INTERVAL_DOMAIN =
 sig
-  include DOMAIN    
+  include DOMAIN
   exception Undefined
   type bound = Z of int | Pinfty | Ninfty
   val l: elt -> bound  (* lower bound *)
@@ -142,7 +143,7 @@ sig
   val to_interval: elt -> Interval.t
 end
 
-module FlatDomain (A: SET) : FLAT_DOMAIN with type atom = A.elt = 
+module FlatDomain (A: SET) : FLAT_DOMAIN with type atom = A.elt =
 struct
   type elt = BOT | TOP | ELT of A.elt
   type atom = A.elt
@@ -151,41 +152,41 @@ struct
   let join x y = match (x, y)
   with (BOT, _) -> y
     | (_, BOT) -> x
-	| (TOP, _) -> TOP
-	| (_, TOP) -> TOP
-  	| (x, y) -> if x = y then x else TOP
+    | (TOP, _) -> TOP
+    | (_, TOP) -> TOP
+    | (x, y) -> if x = y then x else TOP
   let leq x y = match (x, y)
   with (BOT, _) -> true
     | (_, TOP) -> true
-	| (ELT a, ELT b) -> a = b
-	| _ -> false
+    | (ELT a, ELT b) -> a = b
+    | _ -> false
   let make a = ELT a
   let widen x y = join x y
   let narrow x y = match (x, y)
   with (TOP, _) -> y
     | (_, TOP) -> x
-    | _ -> BOT      
+    | _ -> BOT
 end
 
-module ProductDomain (A: DOMAIN) (B: DOMAIN) : PRODUCT_DOMAIN 
-  with type lelt = A.elt and type relt = B.elt = 
+module ProductDomain (A: DOMAIN) (B: DOMAIN) : PRODUCT_DOMAIN
+  with type lelt = A.elt and type relt = B.elt =
 struct
   type elt = BOT | TOP | ELT of A.elt * B.elt
   type lelt = A.elt
   type relt = B.elt
   let bot = BOT
   let top = TOP
-  let join x y = match (x, y) 
+  let join x y = match (x, y)
   with (BOT, _) -> y
-    | (TOP, _) -> TOP 
-	| (_, BOT) -> x 
-    | (_, TOP) -> TOP 
-	| (ELT(a, b), ELT(a', b')) -> ELT (A.join a a', B.join b b')
-  let leq x y = match (x, y) 
-  with (BOT, _) -> true 
-    | (_, BOT) -> false 
-    | (_, TOP) -> true 
-    | (TOP, _) -> false 
+    | (TOP, _) -> TOP
+    | (_, BOT) -> x
+    | (_, TOP) -> TOP
+    | (ELT(a, b), ELT(a', b')) -> ELT (A.join a a', B.join b b')
+  let leq x y = match (x, y)
+  with (BOT, _) -> true
+    | (_, BOT) -> false
+    | (_, TOP) -> true
+    | (TOP, _) -> false
     | (ELT(a, b), ELT(a', b')) -> A.leq a a' && B.leq b b'
   let l x = match x with TOP -> A.top | BOT -> A.bot | ELT (a, b) -> a
   let r x = match x with TOP -> B.top | BOT -> B.bot | ELT (a, b) -> b
@@ -194,7 +195,7 @@ struct
   let narrow a b = ELT (A.narrow (l a) (l b), B.narrow (r a) (r b))
 end
 
-module PowersetDomain (A: SET) : POWERSET_DOMAIN with type atom = A.elt = 
+module PowersetDomain (A: SET) : POWERSET_DOMAIN with type atom = A.elt =
 struct
   type elt = BOT | TOP | ELT of A.t
   type atom = A.elt
@@ -206,8 +207,8 @@ struct
     | (TOP, _) -> TOP
     | (_, TOP) -> TOP
     | (ELT s, ELT s') -> ELT (A.union s s')
-  let mem a s = match s with BOT -> false 
-    | TOP -> true 
+  let mem a s = match s with BOT -> false
+    | TOP -> true
     | ELT s -> A.mem a s
   let fold f x a = match x with BOT -> a
     | TOP -> A.fold f (A.all()) a
@@ -215,13 +216,13 @@ struct
   let map f x = match x with BOT -> BOT
     | TOP ->
         ELT (A.fold (fun a s -> A.add (f a) s) (A.all()) A.empty)
-    | ELT s ->  
+    | ELT s ->
         ELT (A.fold (fun a s' -> A.add (f a) s') s A.empty)
 
   let make lst = match lst
   with [] -> BOT
     | l -> ELT
-        (List.fold_left (fun s x -> A.add x s) 
+        (List.fold_left (fun s x -> A.add x s)
            A.empty l
         )
   let cardinal x = match x with BOT -> 0
@@ -229,7 +230,7 @@ struct
     | ELT s -> A.cardinal s
 
 (* power set domain for
- * SNU 4541.664A Program Analysis 
+ * SNU 4541.664A Program Analysis
  * Wonchan Lee, 2010
  *)
 
@@ -261,23 +262,23 @@ struct
 (* power set domain ends *)
 end
 
-module FunDomain (A: SET) (B: DOMAIN) : FUNCTION_DOMAIN 
-  with type lelt = A.elt and type relt = B.elt 
-  = 
+module FunDomain (A: SET) (B: DOMAIN) : FUNCTION_DOMAIN
+  with type lelt = A.elt and type relt = B.elt
+  =
 struct
   module Map = Map.Make(struct type t = A.elt let compare = compare end)
   type elt = BOT | TOP | ELT of B.elt Map.t
-  type lelt = A.elt 
+  type lelt = A.elt
   type relt = B.elt
   let bot = BOT
   let top = TOP
 
 (* function domain for
- * SNU 4541.664A Program Analysis 
+ * SNU 4541.664A Program Analysis
  * Wonchan Lee, 2010
  *)
 
-(* x: elt, a: key, b: value, c: others *)    
+(* x: elt, a: key, b: value, c: others *)
   let image x a = match x with BOT -> B.bot
     | TOP -> B.top
     | ELT s ->
@@ -317,7 +318,7 @@ struct
   let make pairs = match pairs with [] -> BOT
     | _ -> ELT (List.fold_right
                   (fun (a, b) x -> Map.add a b x)
-                  pairs Map.empty                  
+                  pairs Map.empty
                )
 
   let join x y = match (x, y)
@@ -329,7 +330,7 @@ struct
         (fun a b x ->
            update x a (B.join b (image x a)))
           s' x
-  let leq x y = match (x, y)  
+  let leq x y = match (x, y)
   with (BOT, _) -> true
     | (_, BOT) -> false
     | (_, TOP) -> true
@@ -356,7 +357,7 @@ struct
 (* function domain ends *)
 end
 
-module Zintvl : INTERVAL_DOMAIN = 
+module Zintvl : INTERVAL_DOMAIN =
 struct
   type bound = Z of int | Pinfty | Ninfty
   exception Undefined
@@ -423,7 +424,7 @@ struct
     | (ELT (l1, h1), ELT (l2, h2)) ->
         make (add_bound l1 l2) (add_bound h1 h2)
     | _ -> BOT
-        
+
   let minus_bound b = match b with Pinfty -> Ninfty
     | Ninfty -> Pinfty
     | Z z -> Z (-z)
@@ -442,7 +443,7 @@ struct
         make
           (if bleq l1 l2 then l1 else Ninfty)
           (if bleq h2 h1 then h1 else Pinfty)
-        
+
   let narrow itv1 itv2 = match (itv1, itv2)
   with (TOP, _) -> itv2
     | (_, TOP) -> itv1
@@ -512,18 +513,17 @@ struct
             Interval.make
               (convert_bound l)
               (convert_bound u)
-                
+
 end
 
-module Prty : ADDABLE_FLAT_DOMAIN =
+module Rem : ADDABLE_FLAT_DOMAIN =
 struct
-  type elt = TOP | BOT | EVEN | ODD
+  type elt = TOP | BOT | ELT of int
   type atom = int
 
-  let to_parity x = match x with BOT -> Parity.BOT
-    | EVEN -> Parity.EVEN
-    | ODD -> Parity.ODD
-    | TOP -> Parity.TOP
+  let to_reminder x = match x with BOT -> Reminder.BOT
+    | TOP -> Reminder.TOP
+    | ELT i -> Reminder.ELT i
 
   let top = TOP
   let bot = BOT
@@ -547,13 +547,25 @@ struct
     | (_, BOT) -> BOT
     | _ -> if x = y then x else BOT
 
-  let make n = if n mod 2 = 0 then EVEN else ODD
+  let rem a b =
+    let m = a mod b in
+      if (a * b) > 0 then m else m + b
+
+  let make n = ELT (rem n 1867)
+
   let add x y = match (x, y)
   with (BOT, _) -> BOT
     | (_, BOT) -> BOT
     | (TOP, _) -> TOP
     | (_, TOP) -> TOP
-    | _ -> if x = y then EVEN else ODD
-  let minus x = x
+    | ELT a, ELT b -> ELT (rem (a+b) 1867)
+
+  let minus x = match x
+  with ELT r -> ELT (1867 - r)
+    | _ -> x
+
+  let is_davinci x = match x
+  with ELT r -> r == 415
+    | _ -> false
 
 end

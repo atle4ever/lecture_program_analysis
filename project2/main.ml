@@ -58,8 +58,8 @@ and drop a l =
       [] -> []
     | (a'::l') -> if a' = a then drop a l' else l
 
-let main = 
-  let lexbuf = Lexing.from_channel stdin in
+let main =
+  let lexbuf = Lexing.from_channel (open_in "test.k") in
   let c = Parser.main Lexer.token lexbuf in
   let max_label = get_max_label c in
   let vars = K.vars_of_cmd c in
@@ -84,11 +84,13 @@ let main =
           )
           in
   let module Analyzer = Analyzer (Loc) (Label) in
-  let _  = print_endline "=== INPUT PROGRAM ===" in
+  let _ = print_endline "=== INPUT PROGRAM ===" in
   let _ = print_string (K.string_of_cmd c) in
   let _ = print_newline () in
   let sol = Analyzer.analyze c in
-	print_endline "=== SOLUTION (interval) ===";
-    print_all Analyzer.get_state Analyzer.get_interval_of Interval.string_of sol max_label vars';
-	print_endline "=== SOLUTION (parity) ===";
-    print_all Analyzer.get_state Analyzer.get_parity_of Parity.string_of sol max_label vars';
+  let vars = Analyzer.get_all_davinci_vars sol in
+    print_endline "=== INPUT PROGRAM ===";
+    print_string (K.string_of_cmd c);
+    print_newline ();
+    print_endline "=== DAVINCI VARIABLES ===";
+    List.iter (fun v -> print_endline v) vars

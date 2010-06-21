@@ -1,8 +1,8 @@
-(* Analyzer code *)    
+(* Analyzer code *)
 open K
 open Domain
 open Functors
-  
+
 module type ANALYZER =
 sig
   type state
@@ -10,16 +10,14 @@ sig
 
   val n : program -> label -> cmd
   val analyze : program -> solution
-  val get_state : label -> solution -> state
-  val get_parity_of : id -> state -> Parity.t
-  val get_interval_of : id -> state -> Interval.t
+  val get_all_davinci_vars : solution -> id list
 end
 
 module type ID_SET = SET with type elt = id
 module type INT_SET = SET with type elt = int
-  
-module LocDomain (Loc: ID_SET) = PowersetDomain (Loc)  
-module Fact = ProductDomain (Zintvl) (Prty)
+
+module LocDomain (Loc: ID_SET) = PowersetDomain (Loc)
+module Fact = ProductDomain (Zintvl) (Rem)
 module Value (Loc: ID_SET) = ProductDomain (LocDomain (Loc)) (Fact)
 module Memory (Loc: ID_SET) = FunDomain (Loc) (Value (Loc))
 
@@ -34,7 +32,7 @@ struct
   type fact = Fact.elt
   type locs = LocDomain.elt
   type interval = Zintvl.elt
-  type parity = Prty.elt
+  type parity = Rem.elt
 
   type prty = EVEN | ODD
 
@@ -77,7 +75,7 @@ struct
               else
                 (* weak update if a variable refers to more than one variable *)
                 LocDomain.fold
-                  (fun x' s' -> 
+                  (fun x' s' ->
                       let v' = State.image s' x' in
                         State.update s' x' (Value.join v v'))
                   locs s
@@ -86,7 +84,7 @@ struct
   = fun e s ->
     match e with
         NUM n ->
-          make_fact LocDomain.bot (Zintvl.const n) (Prty.make n)
+          make_fact LocDomain.bot (Zintvl.const n) (Rem.make n)
       | ADD (e1, e2) ->
           let v1 = eval e1 s in
           let v2 = eval e2 s in
@@ -97,7 +95,7 @@ struct
             make_fact
               LocDomain.bot
               (Zintvl.add itv1 itv2)
-              (Prty.add prty1 prty2)
+              (Rem.add prty1 prty2)
       | MINUS e ->
           let v = eval e s in
           let itv = get_interval v in
@@ -105,7 +103,7 @@ struct
             make_fact
               LocDomain.bot
               (Zintvl.minus itv)
-              (Prty.minus prty)
+              (Rem.minus prty)
       | VAR x -> State.image s x
       | STAR x ->
           let locs = get_locs (State.image s x) in
@@ -116,11 +114,11 @@ struct
           make_fact
             (LocDomain.make [x])
             Zintvl.bot
-            Prty.bot
+            Rem.bot
       | READ ->
-          make_fact LocDomain.bot Zintvl.top Prty.top
-      | _ -> make_fact LocDomain.bot Zintvl.bot Prty.bot
-          
+          make_fact LocDomain.bot Zintvl.top Rem.top
+      | _ -> make_fact LocDomain.bot Zintvl.bot Rem.bot
+
   let add_all : (exp * bool) list -> state -> interval * parity
     = fun ls s ->
       List.fold_right
@@ -129,9 +127,9 @@ struct
            let itv = get_interval v in
            let prty' = get_parity v in
              (Zintvl.add sum (Zintvl.negate sign itv),
-              Prty.add prty prty')
+              Rem.add prty prty')
         )
-        ls (Zintvl.const 0, Prty.make 0)
+        ls (Zintvl.const 0, Rem.make 0)
 
   let prune : exp -> state -> state * state
     = fun e s ->
@@ -142,13 +140,13 @@ struct
             let l = Zintvl.l itv in
             let u = Zintvl.u itv in
               match (l, u) with
-                  (Zintvl.Ninfty, _) -> Prty.top
-                | (_, Zintvl.Pinfty) -> Prty.top
+                  (Zintvl.Ninfty, _) -> Rem.top
+                | (_, Zintvl.Pinfty) -> Rem.top
                 | (Zintvl.Z z1, Zintvl.Z z2) ->
-                    if z1 <> z2 then Prty.top else Prty.make z1
+                    if z1 <> z2 then Rem.top else Rem.make z1
                 | _ -> raise (Failure "invalid interval")
           with
-              Zintvl.Undefined -> Prty.bot
+              Zintvl.Undefined -> Rem.bot
       in
       let exp_is_less = (match e with LESS _ -> true | _ -> false) in
       let all = exp_to_addlist e true in
@@ -196,16 +194,16 @@ struct
 
   let get_parity_of : string -> state -> parity
     = fun x s -> get_parity (State.image s x)
-      
+
   let get_interval_of : string -> state -> interval
     = fun x s -> get_interval (State.image s x)
-      
+
   let string_of_value : value -> string
     = fun v ->
       let itv = get_interval v in
       let prty = get_parity v in
         Interval.string_of (Zintvl.to_interval itv) ^ ", " ^
-          Parity.string_of (Prty.to_parity prty)
+          Reminder.string_of (Rem.to_reminder prty)
 
   let string_of_state : state -> string
     = fun s ->
@@ -215,19 +213,30 @@ struct
         s ""
 
 end
-  
+
 module Analyzer (Loc: ID_SET) (Label: INT_SET) : ANALYZER =
 struct
+  module Value = Value (Loc)
   module LocDomain = LocDomain (Loc)
   module State = Memory (Loc)
   module Solution = FunDomain (Label) (State)
-    
+
   module Inter = Interpreter (Loc)
 
+  type value = Value.elt
+  type fact = Fact.elt
+  type parity = Rem.elt
+  type interval = Zintvl.elt
   type state = State.elt
   type solution = Solution.elt
   type operator = solution -> solution -> solution * solution
   type check = solution -> solution -> bool
+
+  let get_fact : value -> fact
+    = fun v -> Value.r v
+
+  let get_parity : value -> parity
+    = fun v -> Fact.r (Value.r v)
 
   let get_some : 'a option -> 'a
     = fun a ->
@@ -253,15 +262,15 @@ struct
    *)
   let n : program -> label -> cmd
     = fun pgm target ->
-	  let rec find : cmd -> cmd list -> cmd list
-	    = fun ((l, c) as cmd) stack ->
+      let rec find : cmd -> cmd list -> cmd list
+        = fun ((l, c) as cmd) stack ->
           if target = l then stack
           else
             match c with
                 SKIP | ASSIGN _ | ASSIGNSTAR _ | END -> []
               | SEQ (c1, c2) -> find c1 (cmd::stack) @ find c2 stack
-	          | IF (_, c1, c2) -> find c1 stack @ find c2 stack
-	          | WHILE (_, c1) -> find c1 (cmd::stack)
+              | IF (_, c1, c2) -> find c1 stack @ find c2 stack
+              | WHILE (_, c1) -> find c1 (cmd::stack)
       in
       let rec get_next : cmd list -> cmd
         = fun cs ->
@@ -386,8 +395,38 @@ struct
       let sol_widened = fix_with_widening pgm sol0 sol0 in
         narrowing pgm sol_widened
 
-  let get_state l sol = Solution.image sol l
-  let get_parity_of x s = Prty.to_parity (Inter.get_parity_of x s)
-  let get_interval_of x s = Zintvl.to_interval (Inter.get_interval_of x s)
+  let get_interval : value -> interval
+    = fun v -> Fact.l (Value.r v)
 
+  let get_parity_of : string -> state -> parity
+    = fun x s -> get_parity (State.image s x)
+
+  let string_of_value : value -> string
+    = fun v ->
+      let itv = get_interval v in
+      let prty = get_parity v in
+        Interval.string_of (Zintvl.to_interval itv) ^ ", " ^
+          Reminder.string_of (Rem.to_reminder prty)
+
+  let string_of_state : state -> string
+    = fun s ->
+      State.fold
+        (fun x f s ->
+           s ^ x ^ ":" ^ string_of_value f ^ "\n")
+        s ""
+
+  let string_of_sol : solution -> string
+    = fun sol ->
+      Solution.fold (fun l s str ->
+                       str ^ "## " ^ (string_of_int l) ^ "\n" ^ (string_of_state s) ^ "\n"
+                    ) sol ""
+
+  let get_all_davinci_vars sol =
+    let _ = print_endline (string_of_sol sol) in
+    let s = Solution.fold (fun l s s' -> State.join s s') sol State.bot in
+      Loc.fold (fun v vs ->
+                  let r  = Fact.r (Value.r (State.image s v)) in
+                  if Rem.is_davinci r then v :: vs
+                  else vs
+               ) (Loc.all()) []
 end

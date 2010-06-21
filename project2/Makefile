@@ -8,7 +8,7 @@ OBJS=lexer.cmo \
 NATIVE_OBJS=$(OBJS:.cmo=.cmx)
 
 all: $(OBJS)
-	ocamlc -o main $(OBJS)
+	ocamlc -g -o main $(OBJS)
 
 native: $(NATIVE_OBJS)
 	ocamlopt -o main.native $(NATIVE_OBJS)
