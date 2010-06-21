@@ -1,4 +1,10 @@
-OBJS=lexer.cmo parser.cmo k.cmo analyzer.cmo main.cmo
+OBJS=lexer.cmo \
+	 parser.cmo \
+	 domain.cmo \
+	 functors.cmo \
+	 k.cmo \
+	 analyzer.cmo \
+	 main.cmo
 NATIVE_OBJS=$(OBJS:.cmo=.cmx)
 
 all: $(OBJS)
