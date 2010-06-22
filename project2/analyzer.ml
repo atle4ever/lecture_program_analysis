@@ -104,6 +104,18 @@ struct
               LocDomain.bot
               (Zintvl.minus itv)
               (Rem.minus prty)
+      | MUL (e1, e2) ->
+          let v1 = eval e1 s in
+          let v2 = eval e2 s in
+          let itv1 = get_interval v1 in
+          let itv2 = get_interval v2 in
+          let prty1 = get_parity v1 in
+          let prty2 = get_parity v2 in
+            make_fact
+              LocDomain.bot
+              (Zintvl.mul itv1 itv2)
+              (Rem.mul prty1 prty2)
+
       | VAR x -> State.image s x
       | STAR x ->
           let locs = get_locs (State.image s x) in

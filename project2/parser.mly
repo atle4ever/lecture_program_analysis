@@ -13,6 +13,7 @@
 %left SEMICOLON
 %left LESS
 %left PLUS
+%left MUL
 %nonassoc IF WHILE
 %nonassoc MINUS
 %%
@@ -34,6 +35,7 @@ INT { K.NUM $1 }
 | TRUE { K.TRUE }
 | FALSE { K.FALSE }
 | LPAREN expr RPAREN { $2 }
+| expr STAR expr %prec MUL { K.MUL($1, $3) }
 | expr PLUS expr { K.ADD($1, $3) }
 | MINUS expr { K.MINUS($2) }
 | ID { K.VAR $1 }

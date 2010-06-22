@@ -5,35 +5,37 @@ type id = string
 type label = int
 type cmd = label * stmt
 and stmt = SKIP
-	   | ASSIGN of id * exp
-	   | ASSIGNSTAR of id * exp
-	   | SEQ of cmd * cmd
-	   | IF of exp * cmd * cmd
-	   | WHILE of exp * cmd
+       | ASSIGN of id * exp
+       | ASSIGNSTAR of id * exp
+       | SEQ of cmd * cmd
+       | IF of exp * cmd * cmd
+       | WHILE of exp * cmd
        | END
-and exp = NUM of int 
-	  | TRUE
-	  | FALSE
-	  | ADD of exp * exp
-	  | MINUS of exp
-	  | VAR of id
-	  | STAR of id
-	  | AMPER of id
-	  | READ
-	  | LESS of exp * exp
+and exp = NUM of int
+      | TRUE
+      | FALSE
+      | ADD of exp * exp
+      | MINUS of exp
+      | MUL of exp * exp
+      | VAR of id
+      | STAR of id
+      | AMPER of id
+      | READ
+      | LESS of exp * exp
 type program = cmd
 
 let rec string_of_exp e = match e with
     NUM i -> string_of_int i
   | ADD (e1, e2) -> "("^(string_of_exp e1)^" + "^(string_of_exp e2)^")"
   | MINUS (e1) -> "-("^(string_of_exp e1)^")"
+  | MUL (e1, e2) -> "("^(string_of_exp e1)^" * "^(string_of_exp e2)^")"
   | VAR x -> x
   | STAR x -> "* "^x
   | AMPER x -> "& "^x
   | READ -> "read"
   | TRUE -> "true"
   | FALSE -> "false"
-  |	LESS (e1, e2) -> "("^(string_of_exp e1)^" < "^(string_of_exp e2)^")"
+  | LESS (e1, e2) -> "("^(string_of_exp e1)^" < "^(string_of_exp e2)^")"
 
 and string_of_stmt s = match s with
     SKIP -> "skip"
