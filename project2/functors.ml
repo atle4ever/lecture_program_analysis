@@ -84,6 +84,7 @@ sig
   include INT_FLAT_DOMAIN
   val add: elt -> elt -> elt
   val minus: elt -> elt
+  val mul: elt -> elt -> elt
   val to_reminder: elt -> Reminder.t
   val is_davinci: elt -> bool
 end
@@ -137,6 +138,7 @@ sig
   val const: int -> elt
   val add: elt -> elt -> elt
   val minus: elt -> elt
+  val mul: elt -> elt -> elt
   val negate: bool -> elt -> elt
   val prune: elt -> elt -> bool -> elt * elt
   val intersect: elt -> elt -> elt * elt
@@ -434,6 +436,24 @@ struct
         make (minus_bound h) (minus_bound l)
     | _ -> BOT
 
+  let mul_bound b1 b2 = match (b1, b2)
+  with (Pinfty, _)
+    | (_, Pinfty) -> Pinfty
+    | (Ninfty, _)
+    | (_, Ninfty) -> Ninfty
+    | (Z z1, Z z2) -> Z (z1 * z2)
+
+  let mul itv1 itv2 = match (itv1, itv2)
+  with (TOP, _)
+    | (_, TOP) -> TOP
+    | (ELT (l1, h1), ELT (l2, h2)) ->
+        let bs = [mul_bound l1 l2; mul_bound l1 h2; mul_bound h1 l2; mul_bound h1 h2] in
+        let min = List.fold_left (fun m b -> if bleq b m then b else m) Pinfty bs in
+        let max = List.fold_left (fun m b -> if bleq b m then b else m) Ninfty bs in
+          ELT (min, max)
+    | _ -> BOT
+
+
   let widen itv1 itv2 = match (itv1, itv2)
   with (TOP, _)
     | (_, TOP) -> TOP
@@ -563,6 +583,13 @@ struct
   let minus x = match x
   with ELT r -> ELT (1867 - r)
     | _ -> x
+
+  let mul x y = match (x, y)
+  with (BOT, _) -> BOT
+    | (_, BOT) -> BOT
+    | (TOP, _) -> TOP
+    | (_, TOP) -> TOP
+    | ELT a, ELT b -> ELT (rem (a*b) 1867)
 
   let is_davinci x = match x
   with ELT r -> r == 415
