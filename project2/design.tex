@@ -11,270 +11,61 @@
 
 \usepackage{mathrsfs}
 
-\title{Project1 Report}
+\title{Project2 Design}
 \author{Kim, Seongjun}
 \date{2009-20769}                                           % Activate to display a given date or no date
 
 \begin{document}
 \maketitle
 
-\section*{프로그램 C의 모듬의미 정의}
+\section*{프로그램 C의 정적분석 결과}
+Project1과 대부분 동일하다. 다만 Parity 도메인 대신 `1867로 나눈 나머지'를 나타내는 Reminder 도메인을 사용한다.
 
-    \subsection*{1. Definition of Domains}
-        \begin{align*}
-            M \in Memory = & \quad Loc \stackrel{\textrm{fin}}{\to} Val \\
-            l \in Loc = & \quad Var \\
-            v \in Val = & \quad \mathbb{Z} + \mathbb{B} + Loc \\
-            b \in \mathbb{B} = & \quad \{T, F\} \\
-            L \in Label = & \quad \mathbb{N} \\
-            s \in State = & \quad ((Label \times Stmt) \times Memory)
-        \end{align*}
-
-        \subsubsection*{Definition of Cmd}
-        Project1의 뼈대와 함께 제공된 type. 각각의 C에 Label을 추가한 형태.
-            \begin{align*}
-                Cmd \in Command = & \quad (Label \times Stmt) \\
-                Stmt \to & \quad \texttt{skip} \\
-                       | & \quad x \texttt{:=} E \\
-                       | & \quad \texttt{*}x \texttt{:=} E \\
-                       | & \quad Cmd ; Cmd \\
-                       | & \quad \texttt{if} \, E \, Cmd \, Cmd \\
-                       | & \quad \texttt{while} \, E \, Cmd
-            \end{align*}
-
-    \subsection*{2. Definition of $T_0$ }
-    주어진 프로그램 C에 해당하는 $Command$를 $Cmd_{0}$라 했을 때 \\
-    $T_0 = \{ (Cmd_0, Memory_{\bot}) \} $
-
-    \subsection*{3. Definition of $Next$ }
-        \begin{align*}
-            Next \in & \quad 2^{State} \to 2^{State} \\
-                   = & \quad {\wp}(next) \quad ({\wp} = \lambda{}f.\lambda{}X. \{f x|x \in X\})
-        \end{align*}
-
-        \subsubsection*{Definition of $next$ }
-            \begin{align*}
-                next                                                     \in & \quad State \to State \\
-                next \, ((L, \texttt{skip}),                            M) = & \quad (n \, L, M) \\
-                next \, ((L, x \, \texttt{:=} \, E),                    M) = & \quad (n \, L, M\{x \mapsto v \} )
-                                                                                \quad (v (\in Var) = \mathcal{V} \, E \, M)\\
-                next \, ((L, \texttt{*}x \, \texttt{:=} \, E),      M) = & \quad (n \, L, M\{l \mapsto v \} )
-                                                                                \quad (l (\in Loc) = M(x), v (\in Var) = \mathcal{V} \, E \, M)\\
-                next \, ((L, {Cmd}_1 \, ; \, {Cmd}_2),  M) = & \quad ({Cmd}_1, M) \\
-                next \, ((L, \texttt{if} \, E \, {Cmd}_1 \, {Cmd}_2),   M) = & \quad (b == T) \, ? \,
-                                                                                ({Cmd}_1, M) \, : \,
-                                                                                ({Cmd}_2, M)
-                                                                                \quad (b (\in \mathbb{B}) = \mathcal{V} \, E \, M)\\
-                next \, ((L, \texttt{while} \, E \, Cmd),               M) = & \quad (b == T) \, ? \,
-                                                                                (Cmd, M) \, : \,
-                                                                                (n \, L, M)
-                                                                                \quad (b (\in \mathbb{B}) = \mathcal{V} \, E \, M)
-            \end{align*}
-
-        \subsubsection*{Definition of $n$}
-        Project1의 뼈대와 함께 제공된 함수. 주어진 Label의 다음 Cmd를 리턴한다.
-
-        \subsubsection*{Definition of $\mathcal{V}$}
-            \begin{align*}
-                \mathcal{V} \in & \quad E \to Memory \to Val \\
-                \mathcal{V} \, n                        \, M = & \quad n \\
-                \mathcal{V} \, \texttt{true}            \, M = & \quad T \\
-                \mathcal{V} \, \texttt{false}       \, M = & \quad F \\
-                \mathcal{V} \, x                    \, M = & \quad M(x) \\
-                \mathcal{V} \, \texttt{*}x          \, M = & \quad M(l) \quad (l (\in Loc) = M(x)) \\
-                \mathcal{V} \, \texttt{\&}x             \, M = & \quad x \\
-                \mathcal{V} \, E_1 \texttt{+} E_2   \, M = & \quad n_1 + n_2
-                                                                \quad (n_1, n_2 \in \mathbb{Z}
-                                                                , n_1 = \mathcal{V} \, E_1 \, M
-                                                                , n_2 = \mathcal{V} \, E_2 \, M) \\
-                \mathcal{V} \, \texttt{-} E             \, M = & \quad -n \quad (n (\in \mathbb{Z}) = \mathcal{V} \, E \, M) \\
-                \mathcal{V} \, E_1 \texttt{<} E_2       \, M = & \quad n_1 < n_2 \, ? \, T \, : \, F
-                                                                \quad (n_1, n_2 \in \mathbb{Z}
-                                                                , n_1 = \mathcal{V} \, E_1 \, M
-                                                                , n_2 = \mathcal{V} \, E_2 \, M) \\
-                \mathcal{V} \, \texttt{read}        \, M = & \quad z \quad (z(\in \mathbb{Z}) \textrm{는 임의의 정수}) \\
-            \end{align*}
+\subsection*{1. Definition of Domains}
+\begin{align*}
+  \hat{n} \in \hat{\mathbb{Z}}            = & \quad (\hat{Reminder} \times \hat{Interval}) \\
+  \hat{r} \in \hat{Reminder}    = & \quad \{ \bot, \top \} \cup \{ 0, ... , 1866 \}
+\end{align*}
 
 
-    \section*{프로그램 C의 정적분석 결과}
+\subsection*{2. 갈로아 연결}
+\begin{align*}
+  2^{\mathbb{Z}} \stackrel{{\alpha}_{\mathbb{Z}}}{\longrightarrow} & \quad \hat{\mathbb{Z}} \\
+  \alpha_{\mathbb{Z}} X = & \quad (\alpha_r X, \alpha_i X)
+\end{align*}
 
-    \subsection*{1. Definition of Domains}
-        \begin{align*}
-            \hat{State}                     = & \quad ((Label \times Stmt) \times \hat{Memory}) \\
-            \hat{m} \in \hat{Memory}    = & \quad Loc \stackrel{\textrm{fin}}{\to} \hat{Val} \\
-            \hat{Val}                   = & \quad \{\bot_{\hat{Val}}, \top_{\hat{Val}} \} \cup \hat{\mathbb{Z}} + \hat{\mathbb{B}} + \hat{Loc} \\
-            \hat{\mathbb{Z}}            = & \quad (\hat{Parity} \times \hat{Interval}) \\
-            \hat{p} \in \hat{Parity}    = & \quad \{ \bot_{\hat{P}}, \top_{\hat{P}}, odd, even \} \\
-            \hat{i} \in \hat{Interval}  = & \quad \{ \bot_{\hat{I}} \} \cup \{(a, b) \, | \, a \le b, \, a, b \in \mathbb{Z} \cup \{\infty, -\infty  \} \\
-            \hat{\mathbb{B}}            = & \quad \{\bot_{\hat{\mathbb{B}}}, \top_{\hat{\mathbb{B}}}, \hat{T}, \hat{F}\} \\
-            \hat{Loc}                   = & \quad 2^{Loc} \\
-        \end{align*}
-
-    \subsection*{2. 갈로아 연결}
-        \begin{align*}
-            {2}^{State} \stackrel{\alpha}{\longrightarrow}          & \quad \hat{State} \\
-            2^{Memory} \stackrel{\alpha'}{\longrightarrow}          & \quad \hat{Memory} \\
-            2^{Val} \stackrel{{\alpha}_{Val}}{\longrightarrow}      & \quad \hat{Val} \\
-            2^{Val} \stackrel{{\alpha}_{p}}{\longrightarrow}            & \quad \hat{Parity} \\
-            2^{Val} \stackrel{{\alpha}_{i}}{\longrightarrow}            & \quad \hat{Interval} \\
-            2^{Val} \stackrel{{\alpha}_{\mathbb{B}}}{\longrightarrow} & \quad \hat{\mathbb{B}} \\
-            2^{Val} \stackrel{{\alpha}_{\mathbb{Z}}}{\longrightarrow} & \quad \hat{\mathbb{Z}} \\
-            2^{Val} \stackrel{{\alpha}_{Loc}}{\longrightarrow}      & \quad \hat{Loc} \\
-        \end{align*}
-
-        \begin{align*}
-            {\alpha}_{Val} X = & \quad X \subseteq \mathbb{B} \textrm{이면 } \alpha_{\mathbb{B}} X, \\
-                            & \quad X \subseteq Loc \textrm{이면 } \alpha_{Loc} X, \\
-                            & \quad X \subseteq \mathbb{Z} \textrm{이면 } \alpha_{\mathbb{Z}} X, \\
-                            & \quad \textrm{그 외의 경우 } \top
-        \end{align*}
-        \begin{align*}
-            \alpha_{\mathbb{B}} \{ \} = & \quad \bot \\
-            \alpha_{\mathbb{B}} \{ T \} = & \quad \hat{T} \\
-            \alpha_{\mathbb{B}} \{ F \} = & \quad \hat{F} \\
-            \alpha_{\mathbb{B}} \{ T, F \} = & \quad \top
-        \end{align*}
-        \begin{align*}
-            \alpha_{Loc} X = & \quad X
-        \end{align*}
-        \begin{align*}
-            \alpha_{\mathbb{Z}} X = & \quad (\alpha_p X, \alpha_i X)
-        \end{align*}
-        \begin{align*}
-            \alpha_{p} X =  & \quad X\textrm{의 모든 원소가 짝수이면 } even, \\
-                            & \quad X\textrm{의 모든 원소가 홀수이면 } odd, \\
-                            & \quad \textrm{그 외의 경우 } \top
-        \end{align*}
-        \begin{align*}
-            \alpha_{i} X = & \quad (min X, max X) \\
-            min X = & \quad X\textrm{의 원소 중 최소값} \\
-            max X = & \quad X\textrm{의 원소 중 최대값}
-        \end{align*}
-
-        \begin{align*}
-            \alpha' X = & \quad \{ x \mapsto \alpha_{Val} (\bigcup_{M \in X}M(x)) | x \in Var\} \\
-        \end{align*}
-
-        \begin{align*}
-            \alpha X = & \quad ((L, Cmd), \alpha'(\{M | (L, Cmd, M) \in X \})) \\
-        \end{align*}
+\begin{align*}
+  \alpha_{r} X =  & \quad X\textrm{의 모든 원소를 1867로 나눈 나머지가 } n(\in [0, 1866]) \textrm{이면 } n, \\
+  & \quad \textrm{그 외의 경우 } \top
+\end{align*}
 
 
-    \subsection*{3. Definition of $\hat{Next}$ }
-        \begin{align*}
-            \hat{Next} \in & \quad {2}^{\hat{State}} \to {2}^{\hat{State}} \\
-                       = & \quad \wp(\sqcup) \circ \hat{\pi} \circ \wp_{\cup}(\hat{next})
-        \end{align*}
+\subsection*{3. Definition of $\hat{+}, \hat{-}, \hat{\times}$ }
+\subsubsection*{Definition of $\hat{+}$}
+\begin{align*}
+  % \hat{+_r}
+  \bot \,\, \hat{+}_r \,\, \hat{r} = & \quad \bot \\
+  \hat{r} \,\, \hat{+}_r \,\, \bot = & \quad \bot \\
+  \top \,\, \hat{+}_r \,\, \hat{r} = & \quad \top \\
+  \hat{r} \,\, \hat{+}_r \,\, \top = & \quad \top \\
+  \hat{r_1} \,\, \hat{+}_r \,\, \hat{r_2} = & \quad (\hat{r_1} + \hat{r_2})\textrm{의 나머지} \\
+\end{align*}
 
-        \subsubsection*{Definition of $\hat{next}$ }
-            \begin{align*}
-                \hat{next} \in & \quad \hat{State} \to 2^{\hat{State}} \\
-                \hat{next} \, ((L, \texttt{skip})                           \, \hat{m}) = & \quad \{ (n \, L, \hat{m}) \} \\
-                \hat{next} \, ((L, x \, \texttt{:=} \, E)                   \, \hat{m}) = & \quad \{ (n \, L, \hat{m}\{x \mapsto \hat{v} \} ) \}
-                                                                                            \quad (\hat{v} (\in \hat{Val})= \hat{\mathcal{V}} \, E \, \hat{m}) \\
-                \hat{next} \, ((L, \texttt{*}x \, \texttt{:=} \, E)         \, \hat{m}) = & \quad \{ (n \, L, \hat{m}\{\hat{l} \mapsto \hat{v} \} ) \}
-                                                                                            \quad (\hat{l} (\in \hat{Loc}) = \hat{m}(x), \hat{v} (\in \hat{Val}) = \hat{\mathcal{V}} \, E \, \hat{m})\\
-                \hat{next} \, ((L, {Cmd}_1 \, ; \, {Cmd}_2) \, \hat{m}) = & \quad \{ ({Cmd}_1, \hat{m}) \} \\
-                \hat{next} \, ((L, \texttt{if} \, E \, {Cmd}_1 \, {Cmd}_2)  \, \hat{m}) = & \quad \hat{b} == \hat{T} \textrm{이면 } \{ ({Cmd}_1, \hat{m}) \}, \\
-                                                                                          & \quad \hat{b} == \hat{F} \textrm{이면 } \{ ({Cmd}_2, \hat{m}) \}, \\
-                                                                                          & \quad \hat{b} == \top \textrm{이면 } \{ ({Cmd}_1, \hat{m}), ({Cmd}_2, \hat{m}) \} \\
-                                                                                          & \quad (\hat{b} (\in \hat{\mathbb{B}}) = \hat{\mathcal{V}} \, E \, \hat{m})\\
-                \hat{next} \, ((L, \texttt{while} \, E \, Cmd)              \, \hat{m}) = & \quad \hat{b} == \hat{T} \textrm{이면 }     \{ (Cmd, \hat{m}) \}, \\
-                                                                                          & \quad \hat{b} == \hat{F} \textrm{이면 } \{ (n \, L, \hat{m}) \}, \\
-                                                                                          & \quad \hat{b} == \top \textrm{이면 } \{ (Cmd, \hat{m}), (n \, L, \hat{m})\} \\
-                                                                                          & \quad (\hat{b} (\in \hat{\mathbb{B}}) = \hat{\mathcal{V}} \, E \, \hat{m})
-            \end{align*}
+\subsubsection*{Definition of $\hat{-}$}
+\begin{align*}
+  \hat{-}_r \,\, \bot = & \bot \\
+  \hat{-}_r \,\, \top = & \top \\
+  \hat{-}_r \,\, \hat{r} = & (1867 - \hat{r})
+\end{align*}
 
-        \subsubsection*{Definition of $\hat{\mathcal{V}}$ }
-            \begin{align*}
-                \hat{\mathcal{V}} \in & \quad E \to \hat{Memory} \to \hat{Val} \\
-                \hat{\mathcal{V}} \, n                      \, \hat{m} = & \quad \alpha_{\mathbb{Z}} (\{n\}) \\
-                \hat{\mathcal{V}} \, \texttt{true}          \, \hat{m} = & \quad \hat{T} \\
-                \hat{\mathcal{V}} \, \texttt{false}     \, \hat{m} = & \quad \hat{F} \\
-                \hat{\mathcal{V}} \, x                  \, \hat{m} = & \quad \hat{m}(x) \\
-                \hat{\mathcal{V}} \, \texttt{*}x            \, \hat{m} = & \quad \hat{m}(\hat{l}) \quad (\hat{l} (\in \hat{Loc}) = \hat{m}(x)) \\
-                \hat{\mathcal{V}} \, \texttt{\&}x           \, \hat{m} = & \quad \{x\} \\
-                \hat{\mathcal{V}} \, E_1 \texttt{+} E_2     \, \hat{m} = & \quad \hat{n_1} + \hat{n_2}
-                                                                \quad (\hat{n_1}, \hat{n_2} \in \hat{\mathbb{Z}}
-                                                                , \hat{n_1} = \hat{\mathcal{V}} \, E_1 \, \hat{m}
-                                                                , \hat{n_2} = \hat{\mathcal{V}} \, E_2 \, \hat{m}) \\
-                \hat{\mathcal{V}} \, \texttt{-} E           \, \hat{m} = & \quad -\hat{n} \quad (\hat{n} (\in \hat{\mathbb{Z}}) = \hat{\mathcal{V}} \, E \, \hat{m}) \\
-                \hat{\mathcal{V}} \, E_1 \texttt{<} E_2     \, \hat{m} = & \quad \hat{n_1} \hat{<} \hat{n_2}
-                                                                \quad (\hat{n_1}, \hat{n_2} \in \hat{\mathbb{Z}}
-                                                                , \hat{n_1} = \hat{\mathcal{V}} \, E_1 \, M
-                                                                , \hat{n_2} = \hat{\mathcal{V}} \, E_2 \, M) \\
-                \hat{\mathcal{V}} \, \texttt{read}      \, \hat{m} = & \quad (\top, (-\infty, \infty)) \\
-        \end{align*}
-
-        \subsubsection*{Definition of $\hat{+}$}
-            \begin{align*}
-                (\hat{p_1}, \hat{i_1}) \hat{+} (\hat{p_2}, \hat{i_2}) = & \quad (\hat{p_1} \,\, \hat{+_p} \,\, \hat{p_2}, \hat{i_1} \,\, \hat{+_i} \,\, \hat{i_2})
-                % \hat{+_p}
-                \top \,\, \hat{+_p} \,\, \hat{p} = & \quad \top \\
-                \hat{p} \,\, \hat{+_p} \,\, \top = & \quad \top \\
-                \bot \,\, \hat{+_p} \,\, \hat{p} = & \quad \hat{p} \\
-                \hat{p} \,\, \hat{+_p} \,\, \bot = & \quad \hat{p} \\
-                \hat{p_1} \,\, \hat{+_p} \,\, \hat{p_2} = & \quad \hat{p_1} == \hat{p_2} ? even : odd \\\\
-                % \hat{+_i}
-                \top \,\, \hat{+_i} \,\, \hat{i} = & \quad \top \\
-                \hat{i} \,\, \hat{+_i} \,\, \top = & \quad \top \\
-                \bot \,\, \hat{+_i} \,\, \hat{i} = & \quad \hat{i} \\
-                \hat{i} \,\, \hat{+_i} \,\, \bot = & \quad \hat{i} \\
-                ({low}_1, {high}_1) \,\, \hat{+_i} \,\, ({low}_2, {high}_2) = & \quad (\hat{min}({low}_1, {low}_2), \hat{max}({high}_1, {high}_2)) \\\\
-                % \hat{min}, \hat{max}
-                \hat{min} (a, b) = & \quad a, b \textrm{중 작은 값} \\
-                \hat{max} (a, b) = & \quad a, b \textrm{중 큰 값} \\
-                & \quad (\forall a \in \mathbb{Z} \cup \{-\infty\}.a < \infty, \forall a \in \mathbb{Z} \cup \{\infty\}.-\infty < a)
-            \end{align*}
-
-        \subsubsection*{Definition of $\hat{-}$}
-            \begin{align*}
-                \hat{-} (\hat{p}, \hat{i}) = & \quad (\hat{p}, \hat{-_i} \hat{i}) \\\\
-                % \hat{-_i)
-                \hat{-_i} \bot = & \quad \bot \\
-                \hat{-_i} \top = & \quad \top \\
-                \hat{-_i} (low, high) = & \quad (-high, -low)
-            \end{align*}
-
-        \subsubsection*{Definition of $\hat{<}$}
-            \begin{align*}
-                (p1, (low1, high1)) \hat{<} (p2, (low2, high2)) = & \quad high1 < low2 \textrm{이면 } \hat{T}) \\
-                                                                & \quad high2 < low1 \textrm{이면 } \hat{F}) \\
-                                                                & \quad \textrm{그 외의 경우 } \top
-            \end{align*}
-
-        \subsubsection*{Definition of $\hat{\pi}$}
-            \begin{align*}
-                \hat{\pi} \in & \quad 2^{\hat{State} \to \hat{State}} \\
-                \hat{\pi} X = & \quad \{ \hat{\pi_l} L X | L \in Label \} \\
-                \hat{\pi_l} L X = & \quad \{ ((L', Stmt), \hat{m}) | ((L', Stmt), \hat{m}) \in X, L == L' \}
-            \end{align*}
-
-%\section*{안전성 증명}
-%   \subsection*{$\hat{next}$의 안정성 증명}
-%       $\hat{next}$의 조건: \\
-%       \[ \forall s \in State: next \, s \in (\wp_\cup(\gamma) \circ \hat{next} \circ \alpha) \{ s \} \]
-%       $State$는 $((Label \times Stmt) \times Memory)$이고, $Stmt$는 귀납적으로 정의되므로 귀납 증명을 통해 위의 조건이 언제나 성립하는 것을 확인한다.\\
-%
-%       Case1: $Stmt \to \texttt{skip} $ \\
-%       이 경우 다음 지점은 언제나 동일하므로 메모리의 상태가 위의 조건에 맞는지만 확인한다. $get_m$($\hat{get_m}$)을 $State$($2^{\hat{State}}$)에서 $Memory$($2^{\hat{Memory}}$)를 얻어내는 함수라고 하자. \\
-%       $ get_m (next \, s) = M $ \\
-%       $ \hat{get_m} (\wp_\cup(\gamma) \circ \hat{next} \circ \alpha (\{ s \})) = \gamma' \circ \alpha' (\{ M \}) $ \\
-%       갈로아 연결의 성질에 따라 $ M \in \gamma' \circ \alpha' (\{ M \})$. \\
-%
-%       Case2: $Stmt \to x \texttt{:=} E $ \\
-%       \begin{align*}
-%           get_m (next \, s) = M\{ x \mapsto v \} \\
-%           \hat{get_m} (\wp_\cup(\gamma) \circ \hat{next} \circ \alpha (\{ s \})) = & \gamma' (\hat{m} \{ x \mapsto \hat{v} \}) \quad (\hat{m} = \alpha'(\{M\}), \hat{v} = \alpha_{Val}(\{ v \})\\
-%                                                                                = & \{ M\{ x \mapsto v' \} | v' \in \gamma_{Val} \circ \alpha_{Val} (\{v\}) \} \\
-%       \end{align*}
-%
-%               갈로아 연결의 성질에 따라 $ M \in \gamma' \circ \alpha' \{ M \}$. 따라서 위의 조건이 성립한다. \\
-%
-%
-%       $ next ((L, x \textrm{:=} E), M) = (n \, L, M \{ x \mapsto v\}) $ \\
-%       $ (\wp_\cup(\gamma) \circ \hat{next} \circ \alpha) \{ ((L, x \textrm{:=} E), M) \} $ \\
-%       갈로아 연결의 성질에 따라 $ \forall l \in (Loc - x). M(x) \in \gamma' (\hat{m})(x) $, $ v \in \gamma' \circ \alpha'(\{v\}) $ \\
-%   \subsection*{$\hat{\pi}$의 안정성 증명}
+\subsubsection*{Definition of $\hat{\times}$}
+\begin{align*}
+  % \hat{+_r}
+  \bot \,\, \hat{\times}_r \,\, \hat{r} = & \quad \bot \\
+  \hat{r} \,\, \hat{\times}_r \,\, \bot = & \quad \bot \\
+  \top \,\, \hat{\times}_r \,\, \hat{r} = & \quad \top \\
+  \hat{r} \,\, \hat{\times}_r \,\, \top = & \quad \top \\
+  \hat{r_1} \,\, \hat{\times}_r \,\, \hat{r_2} = & \quad (\hat{r_1} \times \hat{r_2})\textrm{의 나머지} \\
+\end{align*}
 
 \end{document}
