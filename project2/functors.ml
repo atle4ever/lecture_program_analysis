@@ -155,6 +155,7 @@ sig
   val prune: elt -> elt -> bool -> elt * elt
   val intersect: elt -> elt -> elt * elt
   val to_interval: elt -> Interval.t
+  val isZero: elt -> bool
 end
 
 module FlatDomain (A: SET) : FLAT_DOMAIN with type atom = A.elt =
@@ -479,22 +480,22 @@ struct
     | _ -> BOT
 
   let mul_bound b1 b2 = match (b1, b2)
-  with (Pinfty, _)
+  with (Z 0, _) | (_, Z 0) -> Z 0
+    | (Pinfty, _)
     | (_, Pinfty) -> Pinfty
     | (Ninfty, _)
     | (_, Ninfty) -> Ninfty
     | (Z z1, Z z2) -> Z (z1 * z2)
 
-  let mul itv1 itv2 = match (itv1, itv2)
-  with (TOP, _)
-    | (_, TOP) -> TOP
+  let rec mul itv1 itv2 = match (itv1, itv2)
+  with (TOP, _) -> mul (ELT (Ninfty, Pinfty)) itv2
+    | (_, TOP) -> mul itv1 (ELT (Ninfty, Pinfty))
     | (ELT (l1, h1), ELT (l2, h2)) ->
         let bs = [mul_bound l1 l2; mul_bound l1 h2; mul_bound h1 l2; mul_bound h1 h2] in
         let min = List.fold_left (fun m b -> if bleq b m then b else m) Pinfty bs in
-        let max = List.fold_left (fun m b -> if bleq b m then b else m) Ninfty bs in
+        let max = List.fold_left (fun m b -> if bleq m b then b else m) Ninfty bs in
           ELT (min, max)
     | _ -> BOT
-
 
   let widen itv1 itv2 = match (itv1, itv2)
   with (TOP, _)
@@ -560,6 +561,10 @@ struct
                   (itv1, join itv2_low itv2_high)
             | _ -> raise (Failure "prunning error")
 
+  let isZero itv = match itv
+  with ELT (Z 0, Z 0) -> true
+    | _ -> false
+
   let to_interval : elt -> Interval.t
     = fun itv -> match itv with BOT -> Interval.BOT
       | TOP -> Interval.TOP
@@ -611,7 +616,7 @@ struct
 
   let rem a b =
     let m = a mod b in
-      if (a * b) > 0 then m else m + b
+      if (a * b) >= 0 then m else m + b
 
   let make n = ELT (rem n 1867)
 

@@ -111,10 +111,17 @@ struct
           let itv2 = get_interval v2 in
           let prty1 = get_parity v1 in
           let prty2 = get_parity v2 in
-            make_fact
-              LocDomain.bot
-              (Zintvl.mul itv1 itv2)
-              (Rem.mul prty1 prty2)
+            if Zintvl.isZero itv1 or Zintvl.isZero itv2
+            then
+              make_fact
+                LocDomain.bot
+                (Zintvl.make (Zintvl.Z 0) (Zintvl.Z 0))
+                (Rem.make 0)
+            else
+              make_fact
+                LocDomain.bot
+                (Zintvl.mul itv1 itv2)
+                (Rem.mul prty1 prty2)
 
       | VAR x -> State.image s x
       | STAR x ->
@@ -331,20 +338,26 @@ struct
              match c with
                  (_, IF (e, c1, c2)) ->
                    let (s_true, s_false) = Inter.prune e s' in
-                   let sol' =
+                   let sol_true =
                      if s_true <> State.bot
                      then update sol c1 s_true else sol
                    in
+                   let sol_false =
                      if s_false <> State.bot
-                     then update sol' c2 s_false else sol'
+                     then update sol c2 s_false else sol
+                   in
+                     Solution.join sol_true sol_false
                | (_, WHILE (e, c'')) ->
                    let (s_true, s_false) = Inter.prune e s' in
-                   let sol' =
+                   let sol_true =
                      if s_true <> State.bot
                      then update sol c'' s_true else sol
                    in
+                   let sol_false =
                      if s_false <> State.bot
-                     then update sol' c' s_false else sol'
+                     then update sol c' s_false else sol
+                   in
+                     Solution.join sol_true sol_false
                | (_, SEQ (c1, _)) -> update sol c1 s
                | (_, END) -> sol
                | _ -> update sol c' s'
@@ -384,13 +397,13 @@ struct
         sol1 sol2
 
   let rec fix_with_widening :
-      program -> solution -> solution -> solution
-    = fun pgm sol0 sol ->
-      let sol' = Solution.join sol0 (next pgm sol) in
+      program -> solution -> solution
+    = fun pgm sol ->
+      let sol' = next pgm sol in
       let sol'' = widen pgm sol sol' in
         if Solution.leq sol'' sol
         then sol
-        else fix_with_widening pgm sol0 sol''
+        else fix_with_widening pgm sol''
 
   let rec narrowing :
       program -> solution -> solution
@@ -404,7 +417,7 @@ struct
   let analyze : program -> solution
     = fun ((l, _) as pgm) ->
       let sol0 = Solution.make [(l, State.bot)] in
-      let sol_widened = fix_with_widening pgm sol0 sol0 in
+      let sol_widened = fix_with_widening pgm sol0 in
         narrowing pgm sol_widened
 
   let get_interval : value -> interval

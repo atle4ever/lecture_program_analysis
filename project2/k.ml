@@ -59,6 +59,6 @@ let rec vars_of_cmd (l, pgm) = match pgm with
 let rec exp_to_addlist e sign = match e with
     ADD (e1, e2) -> exp_to_addlist e1 sign @ exp_to_addlist e2 sign
   | MINUS e -> exp_to_addlist e (not sign)
-  | NUM _ | VAR _ | STAR _ | READ -> [(e, sign)]
+  | NUM _ | VAR _ | STAR _ | READ | TRUE | FALSE -> [(e, sign)]
   | LESS (e1, e2) -> exp_to_addlist e1 sign @ exp_to_addlist e2 (not sign)
   | _ -> raise (Failure ("invalid term in addition: " ^ string_of_exp e))
