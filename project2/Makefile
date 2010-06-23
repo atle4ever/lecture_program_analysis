@@ -1,14 +1,8 @@
-OBJS=lexer.cmo \
-	 parser.cmo \
-	 domain.cmo \
-	 functors.cmo \
-	 k.cmo \
-	 analyzer.cmo \
-	 main.cmo
+OBJS=lexer.cmo parser.cmo k.cmo analyzer.cmo main.cmo
 NATIVE_OBJS=$(OBJS:.cmo=.cmx)
 
 all: $(OBJS)
-	ocamlc -g -o main $(OBJS)
+	ocamlc -o main $(OBJS)
 
 native: $(NATIVE_OBJS)
 	ocamlopt -o main.native $(NATIVE_OBJS)
