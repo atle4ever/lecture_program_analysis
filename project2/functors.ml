@@ -99,6 +99,18 @@ sig
   val make: lelt -> relt -> elt
 end
 
+module type PRODUCT3_DOMAIN =
+sig
+  include DOMAIN
+  type lelt
+  type melt
+  type relt
+  val l: elt -> lelt  (* left *)
+  val m: elt -> melt  (* middle *)
+  val r: elt -> relt  (* right *)
+  val make: lelt -> melt -> relt -> elt
+end
+
 module type POWERSET_DOMAIN =
 sig
   include DOMAIN
@@ -195,6 +207,36 @@ struct
   let make a b = ELT (a, b)
   let widen a b = ELT (A.widen (l a) (l b), B.widen (r a) (r b))
   let narrow a b = ELT (A.narrow (l a) (l b), B.narrow (r a) (r b))
+end
+
+module Product3Domain (A: DOMAIN) (B: DOMAIN) (C: DOMAIN): PRODUCT3_DOMAIN
+  with type lelt = A.elt and type melt = B.elt and type relt = C.elt =
+struct
+  type elt = BOT | TOP | ELT of A.elt * B.elt * C.elt
+  type lelt = A.elt
+  type melt = B.elt
+  type relt = C.elt
+  let bot = BOT
+  let top = TOP
+  let join x y = match (x, y)
+  with (BOT, _) -> y
+    | (TOP, _) -> TOP
+    | (_, BOT) -> x
+    | (_, TOP) -> TOP
+    | (ELT(a, b, c), ELT(a', b', c')) -> ELT (A.join a a', B.join b b', C.join c c')
+  let leq x y = match (x, y)
+  with (BOT, _) -> true
+    | (_, BOT) -> false
+    | (_, TOP) -> true
+    | (TOP, _) -> false
+    | (ELT(a, b, c), ELT(a', b', c')) -> A.leq a a' && B.leq b b' && C.leq c c'
+  let l x = match x with TOP -> A.top | BOT -> A.bot | ELT (a, b, c) -> a
+  let m x = match x with TOP -> B.top | BOT -> B.bot | ELT (a, b, c) -> b
+  let r x = match x with TOP -> C.top | BOT -> C.bot | ELT (a, b, c) -> c
+
+  let make a b c = ELT (a, b, c)
+  let widen a b = ELT (A.widen (l a) (l b), B.widen (m a) (m b), C.widen (r a) (r b))
+  let narrow a b = ELT (A.narrow (l a) (l b), B.narrow (m a) (m b), C.widen (r a) (r b))
 end
 
 module PowersetDomain (A: SET) : POWERSET_DOMAIN with type atom = A.elt =
